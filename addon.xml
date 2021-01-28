@@ -20,10 +20,8 @@
         <platform>all</platform>
         <language>de en</language>
         <license>MIT</license>
-        <forum>noForum</forum>
         <source>https://github.com/codingPF/plugin.audio.audiothekBrowser</source>
-        <website>noWebside</website>
-        <email>noEmail</email>
+        <email>j-doo@gmx.de</email>
         <assets>
             <icon>resources/icon.png</icon>
             <fanart>resources/fanart.jpg</fanart>
