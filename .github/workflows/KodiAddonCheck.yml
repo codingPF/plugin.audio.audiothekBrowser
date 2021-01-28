@@ -13,6 +13,6 @@ jobs:
       id: kodi-addon-checker
       uses: xbmc/action-kodi-addon-checker@v1.1
       with:
-        kodi-version: leia
+        kodi-version: krypton
         is-pr: false
         addon-id: ${{ github.event.repository.name }}
