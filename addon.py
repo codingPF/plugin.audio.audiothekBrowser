@@ -17,8 +17,6 @@ import resources.lib.main as Main
 if __name__ == '__main__':
     appContext.init()
     appContext.initAddon(xbmcaddon.Addon())
-    appContext.ADDONCLASS.getAddonInfo('id')
-    appContext.ADDONCLASS.getAddonInfo('version')
     appContext.initLogger(Logger.Logger(appContext.ADDONCLASS.getAddonInfo('id'), appContext.ADDONCLASS.getAddonInfo('version')))
     appContext.initSettings(Settings.Settings(appContext.ADDONCLASS))
     PLUGIN = Main.Main()
