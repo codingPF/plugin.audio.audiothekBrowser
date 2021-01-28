@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.audio.ardaudiothek"
+	name="ArdAudiothek"
+	version="1.0.0"
+	provider-name="Stephan Braatz">
+	<requires>
+		<import addon="xbmc.python" version="2.25.0"/>
+	</requires>
+	<extension
+		point="xbmc.python.pluginsource"
+		library="addon.py">
+		<provides>audio</provides>
+	</extension>
+	<extension point="xbmc.addon.metadata">
+		<summary lang="de_DE">ARD Audiothek</summary>
+		<summary lang="en_GB">ARD Audiothek</summary>
+		<description lang="de_DE">ARD Audiothek</description>
+		<description lang="en_GB">ARD Audiothek</description>
+		<news>Work in progress</news>
+		<platform>all</platform>
+		<language>de en</language>
+		<license>MIT</license>
+		<forum>noForum</forum>
+		<source>https://github.com/mediathekview/plugin.audio.ardaudiothek</source>
+		<website>noWebside</website>
+		<email>noEmail</email>
+		<assets>
+			<icon>resources/icon.png</icon>
+			<fanart>resources/fanart.jpg</fanart>
+			<screenshot>resources/screenshot1.png</screenshot>
+		</assets>
+	</extension>
+</addon>

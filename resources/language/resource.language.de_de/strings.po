@@ -1,0 +1,66 @@
+# Kodi Media Center language file
+# Addon Name: Skin Widgets
+# Addon id: service.skin.widgets
+# Addon Provider: Martijn, phil65
+msgid ""
+msgstr ""
+"Project-Id-Version: Kodi Addons\n"
+"Report-Msgid-Bugs-To: alanwww1@kodi.org\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Kodi Translation Team\n"
+"Language-Team: English (http://www.transifex.com/projects/p/xbmc-addons/language/en/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Main Menu
+msgctxt "#30001"
+msgid "Organization"
+msgstr "Organization"
+
+msgctxt "#30002"
+msgid "Channel"
+msgstr "Sender"
+
+msgctxt "#30003"
+msgid "Broadcast"
+msgstr "Sendungen"
+
+msgctxt "#30004"
+msgid "Episode"
+msgstr "Folgen"
+
+msgctxt "#30005"
+msgid "Livestream"
+msgstr "Livestream"
+
+msgctxt "#30006"
+msgid "Update"
+msgstr "Update"
+
+msgctxt "#30007"
+msgid "Download Folder"
+msgstr "Download Ordner"
+
+msgctxt "#30008"
+msgid "LastUpdateIndex"
+msgstr "Letzte Aktualisierung des Index"
+
+msgctxt "#30009"
+msgid "UpdateInterval"
+msgstr "Aktualisierungsinterval"
+
+msgctxt "#30100"
+msgid "Download"
+msgstr "Download"
+
+msgctxt "#30101"
+msgid "Airdate: {0:s}[CR][CR]"
+msgstr "Ausgestrahlt: {0:s}[CR][CR]"
+
+msgctxt "#30102"
+msgid "Downloading"
+msgstr "Downloading"

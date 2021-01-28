@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+	<category label="30900">
+		<setting id="downloadPath"      type="folder" label="30007" source="auto"  option="writeable"/>
+		<setting id="updateInterval"    type="number" label="30009" default="3600"/>
+		<setting id="iconSize"          type="text"   label="30901" default="512"  visible="false"/>
+		<setting id="iconRatio"         type="text"   label="30902" default="1x1"  visible="false"/>
+		<setting id="lastUsed"          type="number" label="30903" default="0"    visible="false"/>
+		<setting id="lastUpdateIndex"   type="number" label="30908" default="0"    visible="false"/>
+	</category>
+</settings>
