@@ -123,30 +123,42 @@ class Kodi(object):
         skinName = self.getSkinName()
         viewId = -1
         # skin.estuary
-
-        if skinName == 'skin.estuary' and pViewname == 'MAIN':
-            viewId = 55
-        elif skinName == 'skin.estuary' and pViewname == 'SHOWS':
-            viewId = 55
-        elif skinName == 'skin.estuary' and pViewname == 'LIST':
-            viewId = 55
-        elif skinName == 'skin.estuary' and pViewname == 'THUMBNAIL':
-            viewId = 500
-        elif skinName == 'skin.estouchy' and pViewname == 'MAIN':
-            viewId = 500
-        elif skinName == 'skin.estouchy' and pViewname == 'SHOWS':
-            viewId = 500
-        elif skinName == 'skin.estouchy' and pViewname == 'LIST':
-            viewId = 550
-        elif skinName == 'skin.estouchy' and pViewname == 'THUMBNAIL':
-            viewId = 55
-        elif skinName == 'skin.confluence' and pViewname == 'MAIN':
-            viewId = 51
-        elif skinName == 'skin.confluence' and pViewname == 'SHOWS':
-            viewId = 51
-        elif skinName == 'skin.confluence' and pViewname == 'LIST':
-            viewId = 504
-        elif skinName == 'skin.confluence' and pViewname == 'THUMBNAIL':
-            viewId = 500
+        skinEstuary = 'skin.estuary'
+        skinEstouchy = 'skin.estouchy'
+        skinConfluence = 'skin.confluence'
+        #
+        viewMain = 'MAIN'
+        viewShow = 'SHOWS'
+        viewList = 'LIST'
+        viewThump = 'THUMBNAIL'
+        #
+        if skinName == skinEstuary:
+            if pViewname == viewMain:
+                viewId = 55
+            elif pViewname == viewShow:
+                viewId = 55
+            elif pViewname == viewList:
+                viewId = 55
+            elif pViewname == viewThump:
+                viewId = 500
+        elif skinName == skinEstouchy:
+            if pViewname == viewMain:
+                viewId = 500
+            elif pViewname == viewShow:
+                viewId = 500
+            elif pViewname == viewList:
+                viewId = 550
+            elif pViewname == viewThump:
+                viewId = 55
+        elif skinName == skinConfluence:
+            if pViewname == viewMain:
+                viewId = 51
+            elif pViewname == viewShow:
+                viewId = 51
+            elif pViewname == viewList:
+                viewId = 504
+            elif pViewname == viewThump:
+                viewId = 500
+        #
         self.logger.debug('proposed view id {} for {} in mode {}', viewId, skinName, pViewname)
         return viewId;

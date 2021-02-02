@@ -38,23 +38,23 @@ class Main(Kodi):
     def run(self):
         #
         mode = self.getParameters('mode')
-        id = self.getParameters('id')
+        parameterId = self.getParameters('id')
         self.logger.info('Run Plugin with Parameters {}', self.getParameters())
         if mode == 'organization':
             mmUI = ListUI.ListUI(self, 'channel')
             mmUI.generate(self.db.getOrganizations())
         elif mode == 'channel':
             mmUI = ListUI.ListUI(self, 'broadcast')
-            mmUI.generate(self.db.getChannel(id))
+            mmUI.generate(self.db.getChannel(parameterId))
         elif mode == 'broadcast':
             mmUI = ListUI.ListUI(self, 'episode')
-            mmUI.generate(self.db.getBroadcast(id))
+            mmUI.generate(self.db.getBroadcast(parameterId))
         elif mode == 'episode':
             kpg = PG.KodiProgressDialog()
             kpg.startBussyDialog()
-            self.refresh.loadEpisode(id)
+            self.refresh.loadEpisode(parameterId)
             mmUI = EpisodeUI.EpisodeUI(self)
-            mmUI.generate(self.db.getEpisodes(id))
+            mmUI.generate(self.db.getEpisodes(parameterId))
             kpg.stopBussyDialog()
         elif mode == 'livestream':
             mmUI = LivesreamUI.LivestreamUI(self)
@@ -63,7 +63,7 @@ class Main(Kodi):
             kodiPG = PG.KodiProgressDialog()
             kodiPG.create(30102)
             #
-            rs = self.db.getEpisode(id)
+            rs = self.db.getEpisode(parameterId)
             url = rs[0][5]
             name = rs[0][1]
             name = pyUtils.file_cleanupname(name)
