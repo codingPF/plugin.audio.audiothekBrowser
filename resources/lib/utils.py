@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Utilities module
-
-Copyright (c) 2021, Stephan Braatz
 SPDX-License-Identifier: MIT
 """
 

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 The addon settings module
-
-Copyright 2017-2018, Leo Moll and Dominik Schlösser
 SPDX-License-Identifier: MIT
 """
 

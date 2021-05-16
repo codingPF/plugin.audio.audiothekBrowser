@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: MIT
 """
 The base logger module
-
-Copyright 2017-2018, Leo Moll and Dominik Schlösser
 """
 
 

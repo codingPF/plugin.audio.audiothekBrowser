@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 The local SQlite database module
-
-Copyright 2017-2019, Leo Moll
 SPDX-License-Identifier: MIT
 """
 

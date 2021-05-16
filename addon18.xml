@@ -2,7 +2,7 @@
 <addon id="plugin.audio.ardaudiothek"
 	name="ArdAudiothek"
 	version="1.0.0"
-	provider-name="Stephan Braatz">
+	provider-name="CodingPF">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 	</requires>
