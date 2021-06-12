@@ -15,7 +15,7 @@
         <summary lang="de_DE">Audiothek Browser</summary>
         <summary lang="en_GB">Audiothek Browser</summary>
         <description lang="de_DE">Ein Kodi Plugin um die ARD Audiothek in Kodi zu durchsuchen</description>
-        <description lang="en_GB">Browse the ARD Audiothek on Kodi</description>
+        <description lang="en_GB">Browse the ARD Audiothek using Kodi</description>
         <news>Work in progress</news>
         <platform>all</platform>
         <language>de en</language>
