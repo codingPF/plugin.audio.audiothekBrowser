@@ -80,9 +80,21 @@ class RefreshArdAudiothek(object):
                 elementChannelName = publicationService.get('title')
                 elementChannelDescription = publicationService.get('synopsis')
                 elementChannelImage = publicationService.get('_links').get('mt:image').get('href')
-                if publicationService.get('_embedded').get('mt:liveStreams').get('_embedded') != None:
-                    elementChannelLivestream = publicationService.get('_embedded').get('mt:liveStreams').get('_embedded').get('mt:items').get('stream').get('streamUrl')
-                    self.db.addLivestream(elementChannel, (elementChannel, elementChannelName, elementChannelImage, elementChannelLivestream, elementChannelDescription))
+                #
+                if publicationService.get('_embedded').get('mt:liveStreams').get('_embedded') != None \
+                and publicationService.get('_embedded').get('mt:liveStreams').get('numberOfElements') > 0:
+                    livestreamArray = []
+                    testLivestreamArray = publicationService.get('_embedded').get('mt:liveStreams').get('_embedded').get('mt:items')
+                    if isinstance(testLivestreamArray, list):
+                        livestreamArray = testLivestreamArray
+                    else:
+                        livestreamArray.append(testLivestreamArray)
+                    #
+                    for livestreamElement in livestreamArray:
+                        if livestreamElement.get('stream') != None:
+                            elementChannelLivestream = livestreamElement.get('stream').get('streamUrl')
+                            self.db.addLivestream(elementChannel, (elementChannel, elementChannelName, elementChannelImage, elementChannelLivestream, elementChannelDescription))
+                            break
                 else:
                     elementChannelLivestream = ''
                 # self.logger.debug("CHANNEL: {} # {} # {} # {}", elementChannel, elementChannelName, elementChannelImage, elementChannelLivestream)
