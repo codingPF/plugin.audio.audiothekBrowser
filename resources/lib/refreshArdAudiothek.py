@@ -138,7 +138,7 @@ class RefreshArdAudiothek(object):
         self.kodiPG = PG.KodiProgressDialog()
         self.kodiPG.startBussyDialog()
         #
-        url = 'https://api.ardaudiothek.de/programsets/{}'.format(pBroadcast)
+        url = 'https://api.ardaudiothek.de/programsets/{}?limit=999'.format(pBroadcast)
         self.logger.debug('Download {}', url)
         # dataString = pyUtils.url_to_string(url)
         dn = WebResource.WebResource(url)
