@@ -1,0 +1,53 @@
+Vendor = srf|rts|rsi|rtr|swi|default
+
+https://il.srgssr.ch/integrationlayer/2.0/srf/mediaList/audio/livestreams.json
+>> channel
+"id": "69e8ac16-4327-4af4-b873-fd5cd6e895a7",
+"title": "Radio SRF 1",
+"urn" : "urn:srf:audio:69e8ac16-4327-4af4-b873-fd5cd6e895a7"
+
+Live Stream zum Channel 
+
+https://il.srgssr.ch/integrationlayer/2.0/mediaComposition/byUrn/urn:srf:audio:69e8ac16-4327-4af4-b873-fd5cd6e895a7.json?onlyChapters=true&vector=portalplay
+
+
+
+https://il.srgssr.ch/integrationlayer/2.0/srf/showList/radio/alphabeticalByChannel/69e8ac16-4327-4af4-b873-fd5cd6e895a7.json?pageSize=2
+>> showList
+	"id": "add97c3b-99cf-44bd-8ee1-3da020d17a39",
+    "vendor": "SRF",
+    "title": "Besserwisser",
+	"urn": "urn:srf:show:radio:add97c3b-99cf-44bd-8ee1-3da020d17a39",
+	
+https://il.srgssr.ch/integrationlayer/2.0/episodeComposition/latestByShow/byUrn/urn:srf:show:radio:add97c3b-99cf-44bd-8ee1-3da020d17a39.json
+>> EposiodeList
+"next": "https://il.srgssr.ch/integrationlayer/2.0/episodeComposition/latestByShow/byUrn/urn:srf....................
+
+episodeList
+{
+            "id": "993eb99e-aa33-4a0d-be50-d46b37d07fed",
+            "title": "Besserwisser vom 30.10.2021 09:45:00",
+            "publishedDate": "2021-10-30T09:45:00+02:00",
+            "imageUrl": "https://ws.srf.ch/asset/image/audio/640d34d6-0bdf-4023-a70b-91586983af98/WEBVISUAL/1600346380.jpg",
+            "fullLengthUrn": "urn:srf:audio:e56f0c6d-b39e-4261-babf-5d9faa3a88b4",
+            "mediaList": [
+                {
+                    "id": "e56f0c6d-b39e-4261-babf-5d9faa3a88b4",
+                    "mediaType": "AUDIO",
+                    "vendor": "SRF",
+                    "urn": "urn:srf:audio:e56f0c6d-b39e-4261-babf-5d9faa3a88b4",
+                    "title": "Besserwisser von 09:45 Uhr",
+                    "imageUrl": "https://ws.srf.ch/asset/image/audio/640d34d6-0bdf-4023-a70b-91586983af98/WEBVISUAL/1600346380.jpg",
+                    "type": "EPISODE",
+                    "date": "2021-10-30T09:45:00+02:00",
+                    "duration": 299000,
+                    "playableAbroad": true,
+                    "presentation": "DEFAULT"
+                }
+            ]
+        },
+
+>>
+	
+https://il.srgssr.ch/integrationlayer/2.0/mediaComposition/byUrn/urn:srf:audio:e56f0c6d-b39e-4261-babf-5d9faa3a88b4.json?onlyChapters=true&vector=portalplay
+

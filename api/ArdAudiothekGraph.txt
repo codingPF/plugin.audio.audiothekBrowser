@@ -1,0 +1,12 @@
+
+
+https://api.ardaudiothek.de/graphql?query=query LivestreamQuery { publicationService(id: 1864) { id title image { url } livestreams: permanentLivestreams { nodes { id title audios { url } image { url1X1 description attribution } tracking } } } }
+
+https://api.ardaudiothek.de/graphql?query=query LivestreamQuery { publicationService(id: 5418) { id title image { url } livestreams: permanentLivestreams { nodes { id title audios { url } image { url1X1 description attribution } tracking } } } }
+	
+	
+https://api.ardaudiothek.de/graphql?query=query EpisodesQuery { result: programSet(id: 82036058) { items( offset: 12 first: 12 orderBy: PUBLISH_DATE_DESC filter: { isPublished: { equalTo: true } } ) { pageInfo { hasNextPage endCursor } nodes { id title publishDate summary duration path image { url url1X1 description attribution } programSet { id title path publicationService { title genre path organizationName } } audios { url downloadUrl allowDownload } } } } }
+	
+https://api.ardaudiothek.de/graphql?query=query EpisodesQuery { result: programSet(id: 36244846) { items( offset: 12 first: 12 orderBy: PUBLISH_DATE_DESC filter: { isPublished: { equalTo: true } } ) { pageInfo { hasNextPage endCursor } nodes { id title publishDate summary duration path image { url url1X1 description attribution } programSet { id title path publicationService { title genre path organizationName } } audios { url downloadUrl allowDownload } } } } }
+
+https://api.ardaudiothek.de/graphql?query=query EpisodesQuery { result: programSet(id: 36244846) { items( offset: 24 first: 12 orderBy: PUBLISH_DATE_DESC filter: { isPublished: { equalTo: true } } ) { pageInfo { hasNextPage endCursor } nodes { id title publishDate summary duration path image { url url1X1 description attribution } programSet { id title path publicationService { title genre path organizationName } } audios { url downloadUrl allowDownload } } } } }

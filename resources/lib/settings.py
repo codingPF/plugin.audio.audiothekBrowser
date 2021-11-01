@@ -56,3 +56,6 @@ class Settings(object):
 
     def getDownloadPath(self):
         return self._addonClass.getSetting('downloadPath')
+
+    def getMaxFilesPerShow(self):
+        return 4

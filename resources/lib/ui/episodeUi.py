@@ -62,6 +62,9 @@ class EpisodeUI(object):
             'tvshowtitle': pEpisode.title,
             'plot': pEpisode.description
         }
+        #
+        if info_labels['plot'] is None:
+            info_labels['plot'] = ''
 
         if pEpisode.duration is not None and pEpisode.duration > 0:
             info_labels['duration'] = '{:02d}:{:02d}:00'.format(*divmod(pEpisode.duration, 60))

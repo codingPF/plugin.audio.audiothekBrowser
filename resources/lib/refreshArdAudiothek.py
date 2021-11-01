@@ -24,8 +24,8 @@ class RefreshArdAudiothek(object):
         self.logger = appContext.LOGGER.getInstance('RefreshArdAudiothek')
         self.settings = appContext.SETTINGS
         self.db = pDb
-        self.insertCategoryCount = 0
-        self.recordCategoryCount = 0
+        self.insertShowCount = 0
+        self.recordShowCount = 0
         self.insertEpisodeCount = 0
         self.recordEpisodeCount = 0
         self.kodiPG = None
@@ -33,30 +33,18 @@ class RefreshArdAudiothek(object):
 
     def run(self):
         #
-        if not(self.db.isInitialized()):
-            self.settings.setLastUpdateIndex('0')
-            self.db.create()
-        #
-        self.loadcategory()
-        #
-
-    def loadcategory(self):
-        #
-        age = int((time.time() - self.settings.getLastUpdateIndex()) / 60)
-        if age < self.settings.getUpdateInterval():
-            self.logger.debug('Index is up-to-date age: {} / {}', age, self.settings.getUpdateInterval())
-            return
-        else:
-            self.logger.debug('Update index due to age: {} / {} last {} cTime {}', age, self.settings.getUpdateInterval(), self.settings.getLastUpdateIndex(), int(time.time()))
-        #
         self.kodiPG = PG.KodiProgressDialog()
         self.kodiPG.create(30006)
+        #
+        self.loadShows()
+        #
+        self.kodiPG.close()
+
+    def loadShows(self):
+        #
         # dataString = pyUtils.url_to_string('https://api.ardaudiothek.de/organizations/')
         dn = WebResource.WebResource('https://api.ardaudiothek.de/organizations/')
         dataString = dn.retrieveAsString()
-        #
-        self.db.deleteCategory();
-        self.db.deleteLivestream();
         #
         data = json.loads(dataString)
         #
@@ -93,37 +81,34 @@ class RefreshArdAudiothek(object):
                     for livestreamElement in livestreamArray:
                         if livestreamElement.get('stream') != None:
                             elementChannelLivestream = livestreamElement.get('stream').get('streamUrl')
-                            self.db.addLivestream(elementChannel, (elementChannel, elementChannelName, elementChannelImage, elementChannelLivestream, elementChannelDescription))
+                            self.db.addLivestream(elementChannel, ('ARD', elementChannel, elementChannelName, elementChannelImage, elementChannelLivestream, elementChannelDescription))
                             break
                 else:
                     elementChannelLivestream = ''
                 # self.logger.debug("CHANNEL: {} # {} # {} # {}", elementChannel, elementChannelName, elementChannelImage, elementChannelLivestream)
                 #
                 # one element is not retured as array
-                categoryArray = []
+                showArray = []
                 nextElement = publicationService.get('_embedded').get('mt:programSets')
                 if isinstance(nextElement, list):
-                    categoryArray = nextElement
+                    showArray = nextElement
                 else:
-                    categoryArray.append(nextElement)
+                    showArray.append(nextElement)
                 #
-                for category in categoryArray:
-                    categoryId = category.get('id')
-                    categoryName = category.get('title')
-                    categoryImage = category.get('_links').get('mt:image').get('href')
-                    # self.logger.debug("BROADCAST: {} # {} # {}", categoryId , categoryName, categoryImage)
-                    self.recordCategoryCount += 1
-                    self.insertCategoryCount += self.db.addCategory(categoryId, (elementOrganizationId, elementOrganizationName, elementOrganizationImage, elementChannel, elementChannelName, elementChannelImage, categoryId, categoryName, categoryImage))
+                for show in showArray:
+                    showId = show.get('id')
+                    showName = show.get('title')
+                    showImage = show.get('_links').get('mt:image').get('href')
+                    categoryTitle = show.get('_embedded').get('mt:editorialCategories').get('title')
+                    # self.logger.debug("BROADCAST: {} # {} # {}", showId , showName, showImage)
+                    self.recordShowCount += 1
+                    self.insertShowCount += self.db.addShow(showId, ('ARD', elementOrganizationId, elementOrganizationName, elementOrganizationImage, elementChannel, elementChannelName, elementChannelImage, showId, showName, showImage, categoryTitle))
                     #
-                    # self.loadEpisode(categoryId)
+                    # self.loadEpisode(showId)
                     #
-                    self.kodiPG.update(int(self.recordCategoryCount / 10))
+                    self.kodiPG.update(int(self.recordShowCount / 10))
         #
-        self.settings.setLastUpdateIndex(str(int(time.time())))
-        self.kodiPG.close()
-        self.logger.info('last update {} vs {}', str(int(time.time())), self.settings.getLastUpdateIndex())
-        #
-        self.logger.info('refreshed categories ( {} / {} ) in {} sec(s)', self.insertCategoryCount, self.recordCategoryCount, (time.time() - self.starttime))
+        self.logger.info('refreshed ard shows ( {} / {} ) in {} sec(s)', self.insertShowCount, self.recordShowCount, (time.time() - self.starttime))
 
     def loadEpisode(self, pBroadcast):
         #
@@ -165,7 +150,7 @@ class RefreshArdAudiothek(object):
             # episodeUrl = episode.get('_links').get('mt:downloadUrl').get('href')
             episodeImage = episode.get('_links').get('mt:image').get('href')
             self.recordEpisodeCount += 1
-            self.insertEpisodeCount += self.db.addEpisode(episodeId, (pBroadcast, episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage, int(time.time())))
+            self.insertEpisodeCount += self.db.addEpisode(episodeId, ('ARD', pBroadcast, episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage, int(time.time())))
             # self.logger.debug('EPOSIODE {} # {} # {} # {} # {}', pBroadcast, episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage)
         #
         self.db.setLastLoadEpisode(pBroadcast)

@@ -58,7 +58,7 @@ class SqliteDB(object):
             cursor.execute(aStmt, aParams)
         rs = cursor.fetchall()
         cursor.close()
-        # self.logger.debug('execute: {} rows in {} sec', len(rs), time.time() - start)
+        #self.logger.debug('execute: {} rows in {} sec', len(rs), time.time() - start)
         return rs
 
     def executeUpdate(self, aStmt, aParams):
@@ -69,7 +69,7 @@ class SqliteDB(object):
         else:
             cursor.execute(aStmt, aParams)
         rs = cursor.rowcount
-        # self.logger.debug(" rowcount executeUpdate {}" , rs)
+        #self.logger.debug(" rowcount executeUpdate {}" , rs)
         cursor.close()
         self.getConnection().commit()
         return rs
@@ -87,19 +87,23 @@ class SqliteDB(object):
     def create(self):
         self.execute("""
             CREATE TABLE category (
-            organizationId INT, organizationName VARCHAR(32), organizationImage VARCHAR(128), 
-            channelId INT, channelName VARCHAR(32), channelImage VARCHAR(128), 
-            broadcastId INT NOT NULL PRIMARY KEY, broadcastName VARCHAR(32), broadcastImage VARCHAR(128))"""
+            source VARCHAR(32),
+            organizationId VARCHAR(64), organizationName VARCHAR(32), organizationImage VARCHAR(128), 
+            channelId VARCHAR(64), channelName VARCHAR(32), channelImage VARCHAR(128),
+            broadcastId VARCHAR(64) NOT NULL PRIMARY KEY, broadcastName VARCHAR(32), broadcastImage VARCHAR(128),
+            categories VARCHAR(128))"""
                      , None)
         self.execute("""
             CREATE TABLE audiofile (
-            broadcastId INT, episodeId INT NOT NULL PRIMARY KEY, episodeTitle VARCHAR(256),
+            source VARCHAR(32),
+            broadcastId VARCHAR(64), episodeId VARCHAR(64) NOT NULL PRIMARY KEY, episodeTitle VARCHAR(256),
             episodeDuration INT, episodeAired INT, episodeDescription VARCHAR(256), 
             episodeUrl VARCHAR(256), episodeImage VARCHAR(256), created INT)"""
                      , None)
         self.execute("""
             CREATE TABLE livestream (
-            livestreamId INT NOT NULL PRIMARY KEY, livestreamName INT, livestreamImage VARCHAR(256), livestreamUrl VARCHAR(256), livestreamDescription VARCHAR(256))"""
+            source VARCHAR(32),
+            livestreamId VARCHAR(64) NOT NULL PRIMARY KEY, livestreamName VARCHAR(128), livestreamImage VARCHAR(256), livestreamUrl VARCHAR(256), livestreamDescription VARCHAR(256))"""
                      , None)
 
     def setLastLoadEpisode(self, pBroadcast):
@@ -119,23 +123,27 @@ class SqliteDB(object):
         rs = 0
         deleteStmt = 'SELECT 1 FROM audiofile WHERE episodeId = ?'
         if len(self.execute(deleteStmt, (pKey,))) == 0:
-            sql = "INSERT INTO audiofile values (?,?,?,?,?,?,?,?,?)"
+            sql = "INSERT INTO audiofile values (?,?,?,?,?,?,?,?,?,?)"
             rs = self.executeUpdate(sql, pParams)
         return rs
 
-    def deleteCategory(self):
+    def deleteShows(self, pSource = None):
         deleteStmt = "DELETE FROM category"
-        return self.executeUpdate(deleteStmt, None)
+        if pSource:
+            deleteStmt += " WHERE source = ?"
+        return self.executeUpdate(deleteStmt, pSource)
 
-    def deleteLivestream(self):
+    def deleteLivestream(self, pSource = None):
         deleteStmt = "DELETE FROM livestream"
-        return self.executeUpdate(deleteStmt, None)
+        if pSource:
+            deleteStmt += " WHERE source = ?"
+        return self.executeUpdate(deleteStmt, pSource)
 
-    def addCategory(self, pKey, pParams):
+    def addShow(self, pKey, pParams):
         rs = 0
         deleteStmt = 'SELECT 1 FROM category WHERE broadcastId = ?'
         if len(self.execute(deleteStmt, (pKey,))) == 0:
-            sql = "INSERT INTO category values (?,?,?,?,?,?,?,?,?)"
+            sql = "INSERT INTO category values (?,?,?,?,?,?,?,?,?,?,?)"
             rs = self.executeUpdate(sql, pParams)
         return rs
 
@@ -143,7 +151,7 @@ class SqliteDB(object):
         rs = 0
         deleteStmt = 'SELECT 1 FROM livestream WHERE livestreamId = ?'
         if len(self.execute(deleteStmt, (pKey,))) == 0:
-            sql = "INSERT INTO livestream values (?,?,?,?,?)"
+            sql = "INSERT INTO livestream values (?,?,?,?,?,?)"
             rs = self.executeUpdate(sql, pParams)
         return rs
 

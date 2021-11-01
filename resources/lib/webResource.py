@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 # pylint: disable=too-many-lines,line-too-long
 import resources.lib.appContext as appContext
+import time
+import traceback
 #
 import gzip
 from contextlib import closing
@@ -41,27 +43,37 @@ class WebResource(object):
 
     def retrieveAsString(self):
         #
+        starttime = time.time()
+        #
         request = Request(self.url)
         request.add_header('Accept-encoding', 'gzip')
         request.add_header('User-Agent', self.userAgent)
         #
-        with closing(urlopen(request)) as response:
-            #
-            content_encoding = response.info().get('Content-Encoding')
-            #
-            self.logger.info('content type {} OR {}', content_encoding, response.headers.get('Content-Encoding'))
-            # how to decompress gzip data with Python 3
-            if PY2FOUND:
-                if content_encoding == 'gzip':
-                    gz = gzip.GzipFile(fileobj=StringIO(response.read()))
-                    outputString = gz.read()
+        try:
+        #
+            with closing(urlopen(request)) as response:
+                #
+                content_encoding = response.info().get('Content-Encoding')
+                #
+                self.logger.info('content type {} OR {}', content_encoding, response.headers.get('Content-Encoding'))
+                # how to decompress gzip data with Python 3
+                if PY2FOUND:
+                    if content_encoding == 'gzip':
+                        gz = gzip.GzipFile(fileobj=StringIO(response.read()))
+                        outputString = gz.read()
+                    else:
+                        outputString = response.read()
                 else:
-                    outputString = response.read()
-            else:
-                if content_encoding == 'gzip':
-                    gz = gzip.GzipFile(fileobj=BytesIO(response.read()))
-                    outputString = gz.read()
-                else:
-                    outputString = response.read()
+                    if content_encoding == 'gzip':
+                        gz = gzip.GzipFile(fileobj=BytesIO(response.read()))
+                        outputString = gz.read()
+                    else:
+                        outputString = response.read()
+        #
+        except Exception as e:
+            self.logger.error('WebResource exception {} code {}', self.url, traceback.format_exc())
+            outputString = ''
+    
+        self.logger.debug('WebResource url {} retrieved in {} sec(s)',self.url, (time.time() - starttime))
         #
         return outputString
