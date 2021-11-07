@@ -90,7 +90,7 @@ class SqliteDB(object):
             organizationId INT, organizationName VARCHAR(32), organizationImage VARCHAR(128), 
             channelId INT, channelName VARCHAR(32), channelImage VARCHAR(128), 
             broadcastId INT NOT NULL PRIMARY KEY, broadcastName VARCHAR(32), broadcastImage VARCHAR(128),
-            tags VARCHAR(256))"""
+            tags VARCHAR(256), tagImage VARCHAR(128))"""
                      , None)
         self.execute("""
             CREATE TABLE audiofile (
@@ -136,7 +136,7 @@ class SqliteDB(object):
         rs = 0
         deleteStmt = 'SELECT 1 FROM category WHERE broadcastId = ?'
         if len(self.execute(deleteStmt, (pKey,))) == 0:
-            sql = "INSERT INTO category values (?,?,?,?,?,?,?,?,?, ?)"
+            sql = "INSERT INTO category values (?,?,?,?,?,?,?,?,?,?,?)"
             rs = self.executeUpdate(sql, pParams)
         return rs
 
@@ -193,7 +193,7 @@ class SqliteDB(object):
 
     def getTags(self, pTags=None):
         params = []
-        sql = "SELECT tags, tags, '' FROM category"
+        sql = "SELECT tags, tags, tagImage FROM category"
         if pTags != None:
             sql += " WHERE tags = ?"
             params.append(pTags)
