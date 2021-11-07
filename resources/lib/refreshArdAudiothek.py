@@ -111,9 +111,10 @@ class RefreshArdAudiothek(object):
                     categoryId = category.get('id')
                     categoryName = category.get('title')
                     categoryImage = category.get('_links').get('mt:image').get('href')
+                    tags = category.get('_embedded').get('mt:editorialCategories').get('title')
                     # self.logger.debug("BROADCAST: {} # {} # {}", categoryId , categoryName, categoryImage)
                     self.recordCategoryCount += 1
-                    self.insertCategoryCount += self.db.addCategory(categoryId, (elementOrganizationId, elementOrganizationName, elementOrganizationImage, elementChannel, elementChannelName, elementChannelImage, categoryId, categoryName, categoryImage))
+                    self.insertCategoryCount += self.db.addCategory(categoryId, (elementOrganizationId, elementOrganizationName, elementOrganizationImage, elementChannel, elementChannelName, elementChannelImage, categoryId, categoryName, categoryImage, tags))
                     #
                     # self.loadEpisode(categoryId)
                     #

@@ -53,6 +53,10 @@ msgctxt "#30009"
 msgid "UpdateInterval"
 msgstr "Aktualisierungsinterval"
 
+msgctxt "#30010"
+msgid "Tags"
+msgstr "Tags"
+
 msgctxt "#30100"
 msgid "Download"
 msgstr "Download"

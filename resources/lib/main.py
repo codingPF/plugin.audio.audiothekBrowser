@@ -56,6 +56,12 @@ class Main(Kodi):
             mmUI = EpisodeUI.EpisodeUI(self)
             mmUI.generate(self.db.getEpisodes(parameterId))
             kpg.stopBussyDialog()
+        elif mode == 'tags':
+            mmUI = ListUI.ListUI(self, 'tag')
+            mmUI.generate(self.db.getTags(parameterId))
+        elif mode == 'tag':
+            mmUI = ListUI.ListUI(self, 'episode')
+            mmUI.generate(self.db.getTag(parameterId))
         elif mode == 'livestream':
             mmUI = LivesreamUI.LivestreamUI(self)
             mmUI.generate(self.db.getLivestream())

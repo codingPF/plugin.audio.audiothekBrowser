@@ -27,7 +27,7 @@ class ListUI(object):
         listOfElements = []
         listItemModel = ListModel.ListModel()
         for element in pData:
-            listItemModel.init(element[0], element[1], element[2])
+            listItemModel.init(element[0], element[1], element[2]) # pId, pName, pImage
             listOfElements.append(self.generateItem(listItemModel))
         #
         xbmcplugin.addDirectoryItems(

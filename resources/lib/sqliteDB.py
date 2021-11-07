@@ -89,7 +89,8 @@ class SqliteDB(object):
             CREATE TABLE category (
             organizationId INT, organizationName VARCHAR(32), organizationImage VARCHAR(128), 
             channelId INT, channelName VARCHAR(32), channelImage VARCHAR(128), 
-            broadcastId INT NOT NULL PRIMARY KEY, broadcastName VARCHAR(32), broadcastImage VARCHAR(128))"""
+            broadcastId INT NOT NULL PRIMARY KEY, broadcastName VARCHAR(32), broadcastImage VARCHAR(128),
+            tags VARCHAR(256))"""
                      , None)
         self.execute("""
             CREATE TABLE audiofile (
@@ -135,7 +136,7 @@ class SqliteDB(object):
         rs = 0
         deleteStmt = 'SELECT 1 FROM category WHERE broadcastId = ?'
         if len(self.execute(deleteStmt, (pKey,))) == 0:
-            sql = "INSERT INTO category values (?,?,?,?,?,?,?,?,?)"
+            sql = "INSERT INTO category values (?,?,?,?,?,?,?,?,?, ?)"
             rs = self.executeUpdate(sql, pParams)
         return rs
 
@@ -170,20 +171,40 @@ class SqliteDB(object):
         params = []
         sql = "SELECT broadcastId, broadcastName, broadcastImage FROM category"
         if pChannel != None:
-            sql += " WHERE channelId = ? ORDER BY broadcastName"
+            sql += " WHERE channelId = ?"
             params.append(pChannel)
+        sql += ' ORDER BY broadcastName'
         return self.execute(sql, params)
 
     def getEpisodes(self, pBroadcast=None):
         params = []
         sql = "SELECT episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage, created FROM audiofile"
         if pBroadcast != None:
-            sql += " WHERE broadcastId = ? ORDER BY episodeAired desc"
+            sql += " WHERE broadcastId = ?"
             params.append(pBroadcast)
+        sql += ' ORDER BY episodeAired desc'
         return self.execute(sql, params)
 
     def getEpisode(self, pEpisodeId=None):
         params = []
         sql = "SELECT episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage, created FROM audiofile WHERE episodeId = ? ORDER BY episodeTitle"
         params.append(pEpisodeId)
+        return self.execute(sql, params)
+
+    def getTags(self, pTags=None):
+        params = []
+        sql = "SELECT tags, tags, '' FROM category"
+        if pTags != None:
+            sql += " WHERE tags = ?"
+            params.append(pTags)
+        sql +=  ' GROUP BY tags ORDER BY tags'
+        return self.execute(sql, params)
+
+    def getTag(self, pTags=None):
+        params = []
+        sql = "SELECT broadcastId, broadcastName, broadcastImage FROM category"
+        if pTags != None:
+            sql += " WHERE tags = ?"
+            params.append(pTags)
+        sql += ' ORDER BY broadcastName'
         return self.execute(sql, params)

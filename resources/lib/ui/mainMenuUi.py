@@ -24,6 +24,7 @@ class MainMenuUI(object):
         listOfElements.append(self.generateItem(self.addon.localizeString(30002), 'channel', 'icon-channel.png'))
         listOfElements.append(self.generateItem(self.addon.localizeString(30003), 'broadcast', 'icon-broadcast.png'))
         listOfElements.append(self.generateItem(self.addon.localizeString(30005), 'livestream', 'icon-livestream.png'))
+        listOfElements.append(self.generateItem(self.addon.localizeString(30010), 'tags', 'icon-tags.png'))
         listOfElements.append(self.generateItem(self.addon.localizeString(30006), 'refresh', 'icon-refresh.png'))
         xbmcplugin.addDirectoryItems(
             handle=self.addon.addon_handle,
