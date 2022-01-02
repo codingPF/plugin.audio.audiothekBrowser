@@ -13,8 +13,10 @@ class KodiProgressDialog(object):
     """ Kodi Progress Dialog Class """
 
     def __init__(self):
+        self.logger = appContext.LOGGER.getInstance('KodiProgressDialog')
         self.language = appContext.ADDONCLASS.getLocalizedString
         self.pgdialog = None
+        self.lastProgress = None
 
     def __del__(self):
         self.close()
@@ -54,7 +56,13 @@ class KodiProgressDialog(object):
         if self.pgdialog is not None:
             heading = self.language(heading) if isinstance(heading, int) else heading
             message = self.language(message) if isinstance(message, int) else message
-            self.pgdialog.update(percent, heading, message)
+            if not self.lastProgress == percent:
+                self.pgdialog.update(percent, heading, message)
+                self.lastProgress = percent
+                self.logger.debug('update progress {}', percent)
+
+    def updateProgress(self, pDone, pTotal):
+        self.update( int( (pDone / ( pTotal * 1.0 ) ) * 100 ) )
 
     def close(self):
         """ Closes a progress dialog """

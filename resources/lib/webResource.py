@@ -7,9 +7,10 @@ SPDX-License-Identifier: MIT
 # pylint: disable=too-many-lines,line-too-long
 import resources.lib.appContext as appContext
 #
-import gzip
+import zlib
+#
 from contextlib import closing
-
+#
 try:
     from urllib.parse import urlparse, urlencode
     from urllib.request import urlopen, Request
@@ -28,13 +29,32 @@ except ImportError:
 class WebResource(object):
     """
     Download url
+    
+    
+    to (de-)compress deflate format, use wbits = -zlib.MAX_WBITS
+    to (de-)compress zlib format, use wbits = zlib.MAX_WBITS
+    to (de-)compress gzip format, use wbits = zlib.MAX_WBITS | 16
 
     """
 
-    def __init__(self, pUrl):
+    def __init__(self, pUrl, pHeader = None, pAbortHook = None, pProgressListener = None, pChunkSize=8192, pTimeout=10):
         self.logger = appContext.LOGGER.getInstance('WebResource')
         #
-        self.userAgent = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0';
+        self.abortHook = pAbortHook if pAbortHook else lambda: False
+        #
+        self.progressListener = pProgressListener if pProgressListener else self._progressListener
+        #
+        self.connectionTimeout = pTimeout
+        #
+        self.chunkSize = pChunkSize
+        #
+        if pHeader == None:
+            self.header = {
+                'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0',
+                'Accept-encoding': 'gzip'
+            }
+        else:
+            self.header = pHeader    
         #
         self.url = pUrl
         #
@@ -42,26 +62,48 @@ class WebResource(object):
     def retrieveAsString(self):
         #
         request = Request(self.url)
-        request.add_header('Accept-encoding', 'gzip')
-        request.add_header('User-Agent', self.userAgent)
         #
-        with closing(urlopen(request)) as response:
+        for kkey,vvalue in self.header.items():
+            request.add_header(kkey, vvalue)
+        #
+        rsArrayBuffer = []
+        #
+        with closing(urlopen(request, timeout=self.connectionTimeout)) as response:
             #
             content_encoding = response.info().get('Content-Encoding')
+            self.logger.debug('content_encoding {}', content_encoding )
             #
-            self.logger.info('content type {} OR {}', content_encoding, response.headers.get('Content-Encoding'))
-            # how to decompress gzip data with Python 3
-            if PY2FOUND:
-                if content_encoding == 'gzip':
-                    gz = gzip.GzipFile(fileobj=StringIO(response.read()))
-                    outputString = gz.read()
-                else:
-                    outputString = response.read()
+            content_length = response.info().get("Content-Length")
+            content_length = int(content_length) if content_length else self.chunkSize
+            self.logger.debug('content_length {}',content_length )
+            #
+            cycleCnt = 1
+            #
+            if content_encoding == 'gzip':
+                decomp = zlib.decompressobj(16+zlib.MAX_WBITS)
+            elif content_encoding == 'deflate':
+                decomp = zlib.decompressobj(-zlib.MAX_WBITS)
             else:
-                if content_encoding == 'gzip':
-                    gz = gzip.GzipFile(fileobj=BytesIO(response.read()))
-                    outputString = gz.read()
+                decomp = None
+            #
+            buffer=response.read(self.chunkSize)
+            #
+            while buffer and not self.abortHook():
+                if decomp:
+                    outstr = decomp.decompress(buffer)
                 else:
-                    outputString = response.read()
-        #
+                    outstr = buffer
+                #
+                rsArrayBuffer.append(outstr)
+                buffer=response.read(self.chunkSize)
+                cycleCnt += 1
+                self.progressListener(cycleCnt*self.chunkSize, content_length)
+            #
+            outstr = decomp.flush()
+            #
+            outputString = ''.join(rsArrayBuffer)
+            #
         return outputString
+            
+    def _progressListener(self, pDone, pTotal):
+        pass

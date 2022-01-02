@@ -20,10 +20,11 @@ class RefreshArdAudiothek(object):
 
     """
 
-    def __init__(self, pDb):
+    def __init__(self, pDb, pAbortHook):
         self.logger = appContext.LOGGER.getInstance('RefreshArdAudiothek')
         self.settings = appContext.SETTINGS
         self.db = pDb
+        self.abortHook = pAbortHook
         self.insertCategoryCount = 0
         self.recordCategoryCount = 0
         self.insertEpisodeCount = 0
@@ -50,11 +51,17 @@ class RefreshArdAudiothek(object):
             self.logger.debug('Update index due to age: {} / {} last {} cTime {}', age, self.settings.getUpdateInterval(), self.settings.getLastUpdateIndex(), int(time.time()))
         #
         self.kodiPG = PG.KodiProgressDialog()
-        self.kodiPG.create(30006)
+        self.kodiPG.create(30100)
         # dataString = pyUtils.url_to_string('https://api.ardaudiothek.de/organizations/')
-        dn = WebResource.WebResource('https://api.ardaudiothek.de/organizations/')
-        dataString = dn.retrieveAsString()
+        try:
+            dn = WebResource.WebResource('https://api.ardaudiothek.de/organizations/', pProgressListener=self.kodiPG.updateProgress, pAbortHook=self.abortHook)
+            dataString = dn.retrieveAsString()
+        except Exception as err:
+            self.logger.error('Failure downloading {}', err)
+            self.kodiPG.close()
+            raise
         #
+        self.kodiPG.create(30006)
         self.db.deleteCategory();
         self.db.deleteLivestream();
         #
@@ -119,7 +126,7 @@ class RefreshArdAudiothek(object):
                     #
                     # self.loadEpisode(categoryId)
                     #
-                    self.kodiPG.update(int(self.recordCategoryCount / 10))
+                    self.kodiPG.updateProgress(self.recordCategoryCount, 1000)
         #
         self.settings.setLastUpdateIndex(str(int(time.time())))
         self.kodiPG.close()
@@ -138,13 +145,19 @@ class RefreshArdAudiothek(object):
             self.logger.debug('Update Episodes age: {} / {} last {} cTime {}', age, self.settings.getUpdateInterval(), lastUpdate, int(time.time()))
         #
         self.kodiPG = PG.KodiProgressDialog()
-        self.kodiPG.startBussyDialog()
+        self.kodiPG.create(30100)
         #
         url = 'https://api.ardaudiothek.de/programsets/{}?limit=999'.format(pBroadcast)
         self.logger.debug('Download {}', url)
         # dataString = pyUtils.url_to_string(url)
-        dn = WebResource.WebResource(url)
-        dataString = dn.retrieveAsString()
+        try:
+            dn = WebResource.WebResource(url, pProgressListener=self.kodiPG.updateProgress, pAbortHook=self.abortHook)
+            dataString = dn.retrieveAsString()
+        except Exception as err:
+            self.logger.error('Failure downloading {}', err)
+            self.kodiPG.close()
+            raise        
+        self.kodiPG.create(30006)
         #
         data = json.loads(dataString)
         #
@@ -168,6 +181,8 @@ class RefreshArdAudiothek(object):
             episodeImage = episode.get('_links').get('mt:image').get('href')
             self.recordEpisodeCount += 1
             self.insertEpisodeCount += self.db.addEpisode(episodeId, (pBroadcast, episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage, int(time.time())))
+            #
+            self.kodiPG.updateProgress( self.recordEpisodeCount , len(episodeArray))
             # self.logger.debug('EPOSIODE {} # {} # {} # {} # {}', pBroadcast, episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage)
         #
         self.db.setLastLoadEpisode(pBroadcast)

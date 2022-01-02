@@ -31,7 +31,7 @@ class Main(Kodi):
         self.db = SqliteDb.SqliteDB(pyUtils.createPath((self.getAddonDataPath(), 'audiothekDB.db')))
         # print(datetime.datetime.strptime("21/11/06 16:30", "%d/%m/%y %H:%M"))
         # print(str(pyUtils.epoch_from_timestamp('2020-11-07T16:12:13.987+0100', '%Y-%m-%dT%H:%M:%S.%f%z')))
-        self.refresh = RefreshArdAudiothek(self.db)
+        self.refresh = RefreshArdAudiothek(self.db, self.getAbortHook())
         self.refresh.run()
         #
 
