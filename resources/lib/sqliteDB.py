@@ -193,9 +193,9 @@ class SqliteDB(object):
 
     def getTags(self, pTags=None):
         params = []
-        sql = "SELECT tags, tags, tagImage FROM category"
+        sql = "SELECT tags, tags, tagImage FROM category WHERE tags is not null"
         if pTags != None:
-            sql += " WHERE tags = ?"
+            sql += " AND tags = ?"
             params.append(pTags)
         sql +=  ' GROUP BY tags ORDER BY tags'
         return self.execute(sql, params)

@@ -74,7 +74,7 @@ class WebResource(object):
             self.logger.debug('content_encoding {}', content_encoding )
             #
             content_length = response.info().get("Content-Length")
-            content_length = int(content_length) if content_length else self.chunkSize
+            content_length = int(content_length) if content_length else self.chunkSize*100
             self.logger.debug('content_length {}',content_length )
             #
             cycleCnt = 1

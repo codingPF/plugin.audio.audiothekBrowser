@@ -16,7 +16,7 @@ class KodiProgressDialog(object):
         self.logger = appContext.LOGGER.getInstance('KodiProgressDialog')
         self.language = appContext.ADDONCLASS.getLocalizedString
         self.pgdialog = None
-        self.lastProgress = None
+        self.lastProgress = 0
 
     def __del__(self):
         self.close()
@@ -39,6 +39,7 @@ class KodiProgressDialog(object):
             self.pgdialog.create(heading, message)
         else:
             self.pgdialog.update(0, heading, message)
+            self.lastProgress = 0
 
     def update(self, percent, heading=None, message=None):
         """
@@ -56,7 +57,7 @@ class KodiProgressDialog(object):
         if self.pgdialog is not None:
             heading = self.language(heading) if isinstance(heading, int) else heading
             message = self.language(message) if isinstance(message, int) else message
-            if not self.lastProgress == percent:
+            if self.lastProgress+9 < percent:
                 self.pgdialog.update(percent, heading, message)
                 self.lastProgress = percent
                 self.logger.debug('update progress {}', percent)

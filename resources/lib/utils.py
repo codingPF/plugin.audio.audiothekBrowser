@@ -183,7 +183,7 @@ def file_cleanupname(val):
         val(str): input string
     """
     cset = string.ascii_letters + string.digits + \
-        u' _-#äöüÄÖÜßáàâéèêíìîóòôúùûÁÀÉÈÍÌÓÒÚÙçÇœ'
+        u' _-#äöüÄÖÜßáàâéèêíìîóòôúùû�?ÀÉÈ�?ÌÓÒÚÙçÇœ'
     search = ''.join([c for c in val if c in cset])
     return search.strip()
 
@@ -251,6 +251,15 @@ def build_url(query):
     utfEnsuredParams = dict_to_utf(query)
     return sys.argv[0] + '?' + urlencode(utfEnsuredParams)
 
+def build_external_url(pHost, pQuery):
+    """
+    Builds a valid plugin url based on the supplied query object
+
+    Args:
+        query(object): a query object
+    """
+    utfEnsuredParams = dict_to_utf(pQuery)
+    return pHost + '?' + urlencode(utfEnsuredParams)
 
 def _chunked_url_copier(src, dst, reporthook, chunk_size, aborthook):
     aborthook = aborthook if aborthook is not None else lambda: False

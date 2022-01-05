@@ -14,24 +14,103 @@ import resources.lib.kodiProgressDialog as PG
 import resources.lib.webResource as WebResource
 
 
-class RefreshArdAudiothek(object):
+class ArdAudiothekGql(object):
     """
     RefreshArdAudiothek
-
     """
 
     def __init__(self, pDb, pAbortHook):
-        self.logger = appContext.LOGGER.getInstance('RefreshArdAudiothek')
+        self.logger = appContext.LOGGER.getInstance('RefreshArdAudiothekGQL')
         self.settings = appContext.SETTINGS
         self.db = pDb
-        self.abortHook = pAbortHook
-        self.insertCategoryCount = 0
-        self.recordCategoryCount = 0
-        self.insertEpisodeCount = 0
-        self.recordEpisodeCount = 0
+        self.abortHook = pAbortHook        
         self.kodiPG = None
         self.starttime = time.time()
-
+        #
+        self.apiUrl = 'https://api.ardaudiothek.de/graphql';
+        #
+        self.categoryQuery = """
+{
+ organizations {
+  nodes {
+   rowId
+   title
+   image {
+    url
+   }
+   publicationServicesByOrganizationName {
+    nodes {
+     rowId
+     title
+     organizationName
+     synopsis
+     genre
+     numberOfElements
+     homepageUrl
+     image {
+      url
+     }
+     permanentLivestreams {
+      nodes {
+       image {
+        url
+       }
+       audios {
+        url
+       }
+      }
+     }
+     programSets {
+      nodes {
+       numberOfElements
+       id
+       editorialCategory {
+        image {
+         url
+        }
+        title
+       }
+       synopsis
+       title
+       image {
+        url
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}
+"""
+        self.episodeQuery = """
+query($id: Int!) {
+ programSet(id: $id) {
+  id
+  title
+  numberOfElements
+  items(offset: 0, first: 999, filter: {isPublished: {equalTo: true}}) {
+   nodes {
+    id
+    title
+    synopsis
+    duration
+    publishDate
+    image {
+     url
+    }
+    audios {
+     url
+    }
+    programSet {
+     id
+     title
+    }
+   }
+  }
+ }
+}
+"""
     def run(self):
         #
         if not(self.db.isInitialized()):
@@ -42,6 +121,9 @@ class RefreshArdAudiothek(object):
         #
 
     def loadcategory(self):
+        #
+        recordCategoryCount = 0
+        insertCategoryCount = 0
         #
         age = int((time.time() - self.settings.getLastUpdateIndex()) / 60)
         if age < self.settings.getUpdateInterval():
@@ -54,7 +136,9 @@ class RefreshArdAudiothek(object):
         self.kodiPG.create(30100)
         # dataString = pyUtils.url_to_string('https://api.ardaudiothek.de/organizations/')
         try:
-            dn = WebResource.WebResource('https://api.ardaudiothek.de/organizations/', pProgressListener=self.kodiPG.updateProgress, pAbortHook=self.abortHook)
+            url = pyUtils.build_external_url(self.apiUrl, {'query':self.categoryQuery})
+            self.logger.debug('url {}',url)
+            dn = WebResource.WebResource(url, pProgressListener=self.kodiPG.updateProgress, pAbortHook=self.abortHook)
             dataString = dn.retrieveAsString()
         except Exception as err:
             self.logger.error('Failure downloading {}', err)
@@ -67,39 +151,49 @@ class RefreshArdAudiothek(object):
         #
         data = json.loads(dataString)
         #
-        data = data.get('_embedded').get('mt:organizations')
+        data = data.get('data').get('organizations').get('nodes')
         for organization in data:
-            elementOrganizationId = organization.get('id')
-            elementOrganizationName = organization.get('name')
-            elementOrganizationImage = organization.get('_links').get('mt:image').get('href')
+            elementOrganizationId = organization.get('rowId')
+            elementOrganizationName = organization.get('title')
+            elementOrganizationImage = None
             # self.logger.debug("ORGA: {} # {} # {}", elementOrganizationId, elementOrganizationName, elementOrganizationImage)
             #
             # one element is not retured as array
             publicationArray = []
-            nextElement = organization.get('_embedded').get('mt:publicationServices')
+            nextElement = organization.get('publicationServicesByOrganizationName').get('nodes')
             if isinstance(nextElement, list):
                 publicationArray = nextElement
             else:
                 publicationArray.append(nextElement)
             #
+            # i want images very hard
             for publicationService in publicationArray:
-                elementChannel = publicationService.get('id')
+                if publicationService.get('organizationName').upper() == publicationService.get('title').upper():
+                    elementOrganizationImage = self._templateImages(publicationService.get('image').get('url'))
+            if not elementOrganizationImage:
+                elementOrganizationImage = self._templateImages(publicationArray[0].get('image').get('url'))
+            #
+            for publicationService in publicationArray:
+                elementChannel = publicationService.get('rowId')
                 elementChannelName = publicationService.get('title')
+                elementChannelOrganization = publicationService.get('organizationName')
                 elementChannelDescription = publicationService.get('synopsis')
-                elementChannelImage = publicationService.get('_links').get('mt:image').get('href')
+                elementChannelImage = self._templateImages(publicationService.get('image').get('url'))
+                if elementChannelOrganization == elementChannelName:
+                    elementOrganizationImage = elementChannelImage
                 #
-                if publicationService.get('_embedded').get('mt:liveStreams').get('_embedded') != None \
-                and publicationService.get('_embedded').get('mt:liveStreams').get('numberOfElements') > 0:
+                if publicationService.get('permanentLivestreams').get('nodes') != None \
+                and len(publicationService.get('permanentLivestreams').get('nodes')) > 0:
                     livestreamArray = []
-                    testLivestreamArray = publicationService.get('_embedded').get('mt:liveStreams').get('_embedded').get('mt:items')
+                    testLivestreamArray = publicationService.get('permanentLivestreams').get('nodes')
                     if isinstance(testLivestreamArray, list):
                         livestreamArray = testLivestreamArray
                     else:
                         livestreamArray.append(testLivestreamArray)
                     #
                     for livestreamElement in livestreamArray:
-                        if livestreamElement.get('stream') != None:
-                            elementChannelLivestream = livestreamElement.get('stream').get('streamUrl')
+                        if livestreamElement.get('audios') != None:
+                            elementChannelLivestream = livestreamElement.get('audios')[0].get('url')
                             self.db.addLivestream(elementChannel, (elementChannel, elementChannelName, elementChannelImage, elementChannelLivestream, elementChannelDescription))
                             break
                 else:
@@ -108,33 +202,43 @@ class RefreshArdAudiothek(object):
                 #
                 # one element is not retured as array
                 categoryArray = []
-                nextElement = publicationService.get('_embedded').get('mt:programSets')
+                nextElement = publicationService.get('programSets').get('nodes')
                 if isinstance(nextElement, list):
                     categoryArray = nextElement
                 else:
                     categoryArray.append(nextElement)
                 #
                 for category in categoryArray:
-                    categoryId = category.get('id')
-                    categoryName = category.get('title')
-                    categoryImage = category.get('_links').get('mt:image').get('href')
-                    tags = category.get('_embedded').get('mt:editorialCategories').get('title')
-                    tagImage = category.get('_embedded').get('mt:editorialCategories').get('_links').get('mt:image').get('href')
-                    # self.logger.debug("BROADCAST: {} # {} # {}", categoryId , categoryName, categoryImage)
-                    self.recordCategoryCount += 1
-                    self.insertCategoryCount += self.db.addCategory(categoryId, (elementOrganizationId, elementOrganizationName, elementOrganizationImage, elementChannel, elementChannelName, elementChannelImage, categoryId, categoryName, categoryImage, tags, tagImage))
+                    numberOfElement = category.get('numberOfElements')
+                    if numberOfElement and int(numberOfElement) > 0:
+                        categoryId = category.get('id')
+                        categoryName = category.get('title')
+                        categoryImage = self._templateImages(category.get('image').get('url'))
+                        if category.get('editorialCategory'):
+                            tags = category.get('editorialCategory').get('title')
+                            tagImage = category.get('editorialCategory').get('image').get('url')
+                        else:
+                            tags = None
+                            tagImage = None
+                            self.logger.debug('this category has no tag {} {}', categoryId, categoryName);
+                        # self.logger.debug("BROADCAST: {} # {} # {}", categoryId , categoryName, categoryImage)
+                        recordCategoryCount += 1
+                        insertCategoryCount += self.db.addCategory(categoryId, (elementOrganizationId, elementOrganizationName, elementOrganizationImage, elementChannel, elementChannelName, elementChannelImage, categoryId, categoryName, categoryImage, tags, tagImage))
                     #
                     # self.loadEpisode(categoryId)
                     #
-                    self.kodiPG.updateProgress(self.recordCategoryCount, 1000)
+                    self.kodiPG.updateProgress(recordCategoryCount, 1000)
         #
         self.settings.setLastUpdateIndex(str(int(time.time())))
         self.kodiPG.close()
         self.logger.info('last update {} vs {}', str(int(time.time())), self.settings.getLastUpdateIndex())
         #
-        self.logger.info('refreshed categories ( {} / {} ) in {} sec(s)', self.insertCategoryCount, self.recordCategoryCount, (time.time() - self.starttime))
+        self.logger.info('refreshed categories ( {} / {} ) in {} sec(s)', insertCategoryCount, recordCategoryCount, (time.time() - self.starttime))
 
     def loadEpisode(self, pBroadcast):
+        #
+        insertEpisodeCount = 0
+        recordEpisodeCount = 0
         #
         lastUpdate = self.db.getastLoadEpisode(pBroadcast)
         age = int((time.time() - lastUpdate) / 60)
@@ -147,7 +251,7 @@ class RefreshArdAudiothek(object):
         self.kodiPG = PG.KodiProgressDialog()
         self.kodiPG.create(30100)
         #
-        url = 'https://api.ardaudiothek.de/programsets/{}?limit=999'.format(pBroadcast)
+        url = pyUtils.build_external_url(self.apiUrl, {'query':self.episodeQuery, 'variables':'{' + '"id":{}'.format(pBroadcast) + '}'})
         self.logger.debug('Download {}', url)
         # dataString = pyUtils.url_to_string(url)
         try:
@@ -162,7 +266,7 @@ class RefreshArdAudiothek(object):
         data = json.loads(dataString)
         #
         episodeArray = []
-        data = data.get('_embedded').get('mt:items')
+        data = data.get('data').get('programSet').get('items').get('nodes')
         if data == None:
             return
         elif isinstance(data, list):
@@ -174,19 +278,18 @@ class RefreshArdAudiothek(object):
             episodeId = episode.get('id')
             episodeTitle = episode.get('title')
             episodeDuration = episode.get('duration')
-            episodeAired = self._parseTimestamp(episode.get('publicationStartDateAndTime'))
+            episodeAired = self._parseTimestamp(episode.get('publishDate'))
             episodeDescription = episode.get('synopsis')
-            episodeUrl = episode.get('_links').get('mt:bestQualityPlaybackUrl').get('href')
-            # episodeUrl = episode.get('_links').get('mt:downloadUrl').get('href')
-            episodeImage = episode.get('_links').get('mt:image').get('href')
-            self.recordEpisodeCount += 1
-            self.insertEpisodeCount += self.db.addEpisode(episodeId, (pBroadcast, episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage, int(time.time())))
+            episodeUrl = episode.get('audios')[0].get('url')
+            episodeImage = self._templateImages(episode.get('image').get('url'))
+            recordEpisodeCount += 1
+            insertEpisodeCount += self.db.addEpisode(episodeId, (pBroadcast, episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage, int(time.time())))
             #
-            self.kodiPG.updateProgress( self.recordEpisodeCount , len(episodeArray))
+            self.kodiPG.updateProgress( recordEpisodeCount , len(episodeArray))
             # self.logger.debug('EPOSIODE {} # {} # {} # {} # {}', pBroadcast, episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage)
         #
         self.db.setLastLoadEpisode(pBroadcast)
-        self.logger.info('loadEpisode ( {} / {} ) in {} sec(s)', self.insertEpisodeCount, self.recordEpisodeCount, (time.time() - self.starttime))
+        self.logger.info('loadEpisode ( {} / {} ) in {} sec(s)', insertEpisodeCount, recordEpisodeCount, (time.time() - self.starttime))
 
     def _parseTimestamp(self, pTimestamp):
         y = pTimestamp[0:4]
@@ -203,3 +306,6 @@ class RefreshArdAudiothek(object):
         ref = datetime.timedelta(hours=int(tzhh))
         dt = (new_time + ref)
         return int((dt - datetime.datetime(year=1970, month=1, day=1)).total_seconds())
+
+    def _templateImages(self, pImageUrl):
+        return pImageUrl.replace('/16x9/{width}','/{ratio}/{width}')

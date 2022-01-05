@@ -5,15 +5,14 @@ The main addon module
 SPDX-License-Identifier: MIT
 
 """
+import xbmcplugin
 import time
+import os
 import resources.lib.appContext as appContext
 import resources.lib.utils as pyUtils
-import resources.lib.ui.mainMenuUi as MainMenuUI
-import resources.lib.ui.listUi as ListUI
-import resources.lib.ui.episodeUi as EpisodeUI
-import resources.lib.ui.livestreamUi as LivesreamUI
+import resources.lib.kodiUi as KodiUI
 import resources.lib.sqliteDB as SqliteDb
-from resources.lib.refreshArdAudiothek import RefreshArdAudiothek
+from resources.lib.ardAudiothekGql import ArdAudiothekGql
 from resources.lib.kodi import Kodi
 import resources.lib.kodiProgressDialog as PG
 #
@@ -23,7 +22,7 @@ class Main(Kodi):
 
     def __init__(self):
         super(Main, self).__init__()
-        self.logger = appContext.LOGGER.getInstance('MAIN')
+        self.logger = appContext.LOGGER.getInstance('Main')
         self.settings = appContext.SETTINGS
         # ensure we have settings and a addon data directory
         self.setSetting('lastUsed', str(int(time.time())))
@@ -31,7 +30,7 @@ class Main(Kodi):
         self.db = SqliteDb.SqliteDB(pyUtils.createPath((self.getAddonDataPath(), 'audiothekDB.db')))
         # print(datetime.datetime.strptime("21/11/06 16:30", "%d/%m/%y %H:%M"))
         # print(str(pyUtils.epoch_from_timestamp('2020-11-07T16:12:13.987+0100', '%Y-%m-%dT%H:%M:%S.%f%z')))
-        self.refresh = RefreshArdAudiothek(self.db, self.getAbortHook())
+        self.refresh = ArdAudiothekGql(self.db, self.getAbortHook())
         self.refresh.run()
         #
 
@@ -41,30 +40,34 @@ class Main(Kodi):
         parameterId = self.getParameters('id')
         self.logger.info('Run Plugin with Parameters {}', self.getParameters())
         if mode == 'organization':
-            mmUI = ListUI.ListUI(self, 'channel')
-            mmUI.generate(self.db.getOrganizations())
+            mmUI = KodiUI.KodiUI(self, 'movies', [xbmcplugin.SORT_METHOD_TITLE])
+            self.genList(mmUI, self.db.getOrganizations(), 'channel')
+            #
         elif mode == 'channel':
-            mmUI = ListUI.ListUI(self, 'broadcast')
-            mmUI.generate(self.db.getChannel(parameterId))
+            mmUI = KodiUI.KodiUI(self, 'movies', [xbmcplugin.SORT_METHOD_TITLE])
+            self.genList(mmUI, self.db.getChannel(parameterId),'broadcast')
+            #
         elif mode == 'broadcast':
-            mmUI = ListUI.ListUI(self, 'episode')
-            mmUI.generate(self.db.getBroadcast(parameterId))
+            mmUI = KodiUI.KodiUI(self, 'movies', [xbmcplugin.SORT_METHOD_TITLE])
+            self.genList(mmUI, self.db.getBroadcast(parameterId),'episode')
+            #
         elif mode == 'episode':
-            kpg = PG.KodiProgressDialog()
-            kpg.startBussyDialog()
             self.refresh.loadEpisode(parameterId)
-            mmUI = EpisodeUI.EpisodeUI(self)
-            mmUI.generate(self.db.getEpisodes(parameterId))
-            kpg.stopBussyDialog()
+            mmUI = KodiUI.KodiUI(self, 'audio')
+            self.genItems(mmUI, self.db.getEpisodes(parameterId))
+            #            
         elif mode == 'tags':
-            mmUI = ListUI.ListUI(self, 'tag')
-            mmUI.generate(self.db.getTags(parameterId))
+            mmUI = KodiUI.KodiUI(self, 'movies', [xbmcplugin.SORT_METHOD_TITLE])
+            self.genList(mmUI, self.db.getTags(parameterId), 'tag')
+            #
         elif mode == 'tag':
-            mmUI = ListUI.ListUI(self, 'episode')
-            mmUI.generate(self.db.getTag(parameterId))
+            mmUI = KodiUI.KodiUI(self, 'movies', [xbmcplugin.SORT_METHOD_TITLE])
+            self.genList(mmUI, self.db.getTag(parameterId), 'episode')
+            #
         elif mode == 'livestream':
-            mmUI = LivesreamUI.LivestreamUI(self)
-            mmUI.generate(self.db.getLivestream())
+            mmUI = KodiUI.KodiUI(self, 'movies', [xbmcplugin.SORT_METHOD_TITLE])
+            self.genLivestream(mmUI, self.db.getLivestream())
+            #
         elif mode == 'download':
             kodiPG = PG.KodiProgressDialog()
             kodiPG.create(30102)
@@ -81,8 +84,121 @@ class Main(Kodi):
         elif mode == 'refresh':
             self.db.reset()
             self.executebuiltin('Container.Refresh')
+            #
         else:
-            mmUI = MainMenuUI.MainMenuUI(self)
-            mmUI.generate()
+            mmUI = KodiUI.KodiUI(self, '', [xbmcplugin.SORT_METHOD_TITLE])
+            self.getMainMenuData(mmUI)
         #
         self.db.exit()
+
+    ##########
+
+    def getMainMenuData(self, pUI):
+        pUI.addListItem(
+                pTitle=self.localizeString(30001), 
+                pUrl=self.generateUrl({'mode': 'organization'}), 
+                pIcon=os.path.join(self.getAddonPath(), 'resources', 'icons', 'icon-org.png'), 
+                pPlayable='False', 
+                pFolder=True)
+        pUI.addListItem(
+                pTitle=self.localizeString(30002), 
+                pUrl=self.generateUrl({'mode': 'channel'}), 
+                pIcon=os.path.join(self.getAddonPath(), 'resources', 'icons', 'icon-channel.png'), 
+                pPlayable='False', 
+                pFolder=True)
+        pUI.addListItem(
+                pTitle=self.localizeString(30003), 
+                pUrl=self.generateUrl({'mode': 'broadcast'}), 
+                pIcon=os.path.join(self.getAddonPath(), 'resources', 'icons', 'icon-broadcast.png'), 
+                pPlayable='False', 
+                pFolder=True)
+        pUI.addListItem(
+                pTitle=self.localizeString(30005), 
+                pUrl=self.generateUrl({'mode': 'livestream'}), 
+                pIcon=os.path.join(self.getAddonPath(), 'resources', 'icons', 'icon-livestream.png'), 
+                pPlayable='False', 
+                pFolder=True)
+        pUI.addListItem(
+                pTitle=self.localizeString(30010), 
+                pUrl=self.generateUrl({'mode': 'tags'}), 
+                pIcon=os.path.join(self.getAddonPath(), 'resources', 'icons', 'icon-tags.png'), 
+                pPlayable='False', 
+                pFolder=True)
+        pUI.addListItem(
+                pTitle=self.localizeString(30006), 
+                pUrl=self.generateUrl({'mode': 'refresh'}), 
+                pIcon=os.path.join(self.getAddonPath(), 'resources', 'icons', 'icon-refresh.png'), 
+                pPlayable='False', 
+                pFolder=True)
+        #
+        pUI.render()
+                
+
+    ############
+    #
+    # specific transformations
+    #
+    ###########
+    
+    # id, name, imgage
+    def genList(self, pUI, pData, pTargetMode):
+        for element in pData:
+            icon = None
+            if element[2]:
+                icon = element[2].replace('{ratio}', self.settings.getIconRatio()).replace('{width}', self.settings.getIconSize())
+            #
+            targetUrl = pyUtils.build_url({
+                'mode': pTargetMode,
+                'id' : element[0]
+                })
+            pUI.addListItem(
+                pTitle=element[1], 
+                pUrl=targetUrl, 
+                pIcon=icon, 
+                pPlayable='False', 
+                pFolder=True)
+        #
+        pUI.render()
+        #
+        self.setViewId(self.resolveViewId('THUMBNAIL'))
+        #
+
+    #episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage, created
+    def genItems(self, pUI, pData):
+        for element in pData:
+            icon = None
+            if element[6]:
+                icon = element[6].replace('{ratio}', self.settings.getIconRatio()).replace('{width}', self.settings.getIconSize())
+            #
+            cm = [(self.localizeString(30100),'RunPlugin({})'.format(self.generateUrl({'mode': "download",'id': element[0]})))]
+            #
+            pUI.addListItem(
+                pTitle=element[1], 
+                pUrl=element[5], 
+                pPlot=element[4],
+                pDuration=element[2],
+                pAired=element[3],
+                pIcon=icon,
+                pContextMenu=cm
+            )
+        #
+        pUI.render()
+        #
+
+    #livestreamId, livestreamName, livestreamImage, livestreamUrl, livestreamDescription
+    def genLivestream(self, pUI, pData):
+        for element in pData:
+            icon = None
+            if element[2]:
+                icon = element[2].replace('{ratio}', self.settings.getIconRatio()).replace('{width}', self.settings.getIconSize())
+            #
+            pUI.addListItem(
+                pTitle=element[1], 
+                pUrl=element[3], 
+                pIcon=icon
+            )
+        #
+        pUI.render()
+        #
+        self.setViewId(self.resolveViewId('THUMBNAIL'))
+        #
