@@ -84,12 +84,12 @@ class ArdAudiothekGql(object):
 }
 """
         self.episodeQuery = """
-query($id: Int!) {
+query($id:Int!, $offset:Int!, $limit:Int!) {
  programSet(id: $id) {
   id
   title
   numberOfElements
-  items(offset: 0, first: 999, filter: {isPublished: {equalTo: true}}) {
+  items(offset: $offset, first: $limit, filter: {isPublished: {equalTo: true}}) {
    nodes {
     id
     title
@@ -111,6 +111,40 @@ query($id: Int!) {
  }
 }
 """
+        self.searchQuery = """
+query ($query:String!, $offset:Int!, $limit:Int!) {
+ search(query: $query, offset: $offset, limit: $limit) {
+  programSets {
+   nodes {
+     id
+     title
+     image {
+      url
+     }
+   }
+  }
+  items {
+   nodes {
+    id
+    title
+    synopsis
+    duration
+    publishDate
+    image {
+     url
+    }
+    audios {
+     url
+    }
+    programSet {
+     id
+     title
+    }
+   }
+  }
+ }
+}
+        """
     def run(self):
         #
         if not(self.db.isInitialized()):
@@ -251,7 +285,9 @@ query($id: Int!) {
         self.kodiPG = PG.KodiProgressDialog()
         self.kodiPG.create(30100)
         #
-        url = pyUtils.build_external_url(self.apiUrl, {'query':self.episodeQuery, 'variables':'{' + '"id":{}'.format(pBroadcast) + '}'})
+        params = {'id': int(pBroadcast), 'limit': 999, 'offset': 0}
+        self.logger.debug('params: {}',json.dumps(params))
+        url = pyUtils.build_external_url(self.apiUrl, {'query':self.episodeQuery, 'variables':json.dumps(params)})
         self.logger.debug('Download {}', url)
         # dataString = pyUtils.url_to_string(url)
         try:
@@ -309,3 +345,39 @@ query($id: Int!) {
 
     def _templateImages(self, pImageUrl):
         return pImageUrl.replace('/16x9/{width}','/{ratio}/{width}')
+    
+    def query(self, pSearchTerms, pOffset=0, pLimit=999):
+        #
+        rs = []
+        #
+        self.kodiPG = PG.KodiProgressDialog()
+        self.kodiPG.create(30006)
+        params = {'query': pSearchTerms, 'limit': pLimit, 'offset': pOffset}
+        self.logger.debug('params: {}',json.dumps(params))
+        url = pyUtils.build_external_url(self.apiUrl, {'query':self.searchQuery, 'variables':json.dumps(params)})
+        self.logger.debug('Download {}', url)
+        try:
+            dn = WebResource.WebResource(url, pProgressListener=self.kodiPG.updateProgress, pAbortHook=self.abortHook)
+            dataString = dn.retrieveAsString()
+        except Exception as err:
+            self.logger.error('Failure downloading {}', err)
+            self.kodiPG.close()
+            raise        
+        #
+        data = json.loads(dataString)
+        self.logger.debug('received {}',dataString)
+        #
+        broadcasts = []
+        broadcasts = data.get('data').get('search').get('programSets')
+        #
+        if broadcasts:
+            for broadcast in broadcasts.get('nodes'):
+                rs.append([broadcast.get('id'), broadcast.get('title'), self._templateImages(broadcast.get('image').get('url'))])
+        #
+        episodes = []
+        episodes = data.get('data').get('search').get('items')
+        if episodes:
+            for episode in episodes.get('nodes'):
+                rs.append([episode.get('id'), episode.get('title'), self._templateImages(episode.get('image').get('url')), episode.get('audios')[0].get('url'),episode.get('duration'),self._parseTimestamp(episode.get('publishDate')),episode.get('synopsis')])
+        #
+        return rs

@@ -68,6 +68,20 @@ class Main(Kodi):
             mmUI = KodiUI.KodiUI(self, 'movies', [xbmcplugin.SORT_METHOD_TITLE])
             self.genLivestream(mmUI, self.db.getLivestream())
             #
+        elif mode == 'search':
+            pQuery = self.get_entered_text()
+            if pQuery and pQuery[1]:
+                cmd = 'Container.refresh({})'.format(self.generateUrl({'mode': "searchQuery",'queryString': pQuery[0]}))
+                self.logger.debug('cmd {}',cmd)
+                xbmcplugin.endOfDirectory(self.addon_handle, cacheToDisc=False)
+                self.executebuiltin(cmd)
+            #
+        elif mode == 'searchQuery':
+            mmUI = KodiUI.KodiUI(self, 'audio', [xbmcplugin.SORT_METHOD_TITLE])
+            query = self.getParameters('queryString')
+            if query:
+                self.genSeachItems(mmUI, self.refresh.query(query))
+            #
         elif mode == 'download':
             kodiPG = PG.KodiProgressDialog()
             kodiPG.create(30102)
@@ -122,6 +136,12 @@ class Main(Kodi):
                 pTitle=self.localizeString(30010), 
                 pUrl=self.generateUrl({'mode': 'tags'}), 
                 pIcon=os.path.join(self.getAddonPath(), 'resources', 'icons', 'icon-tags.png'), 
+                pPlayable='False', 
+                pFolder=True)
+        pUI.addListItem(
+                pTitle=self.localizeString(30011), 
+                pUrl=self.generateUrl({'mode': 'search'}), 
+                pIcon=os.path.join(self.getAddonPath(), 'resources', 'icons', 'icon-search.png'), 
                 pPlayable='False', 
                 pFolder=True)
         pUI.addListItem(
@@ -201,4 +221,39 @@ class Main(Kodi):
         pUI.render()
         #
         self.setViewId(self.resolveViewId('THUMBNAIL'))
+        #
+
+    # id, title, image, url, duration, publishDate, synopsis
+    def genSeachItems(self, pUI, pData):
+        for element in pData:
+            icon = None
+            if element[2]:
+                icon = element[2].replace('{ratio}', self.settings.getIconRatio()).replace('{width}', self.settings.getIconSize())
+            #
+            if len(element) > 3:
+                cm = [(self.localizeString(30100),'RunPlugin({})'.format(self.generateUrl({'mode': "download",'id': element[0]})))]
+                #
+                pUI.addListItem(
+                    pTitle=element[1], 
+                    pUrl=element[3], 
+                    pPlot=element[6],
+                    pDuration=element[4],
+                    pAired=element[5],
+                    pIcon=icon,
+                    pContextMenu=cm
+                )
+            else:
+                targetUrl = pyUtils.build_url({
+                    'mode': 'episode',
+                    'id' : element[0]
+                })
+                pUI.addListItem(
+                    pTitle=element[1], 
+                    pUrl=targetUrl, 
+                    pIcon=icon,
+                    pPlayable='False', 
+                    pFolder=True
+                )
+        #
+        pUI.render()
         #

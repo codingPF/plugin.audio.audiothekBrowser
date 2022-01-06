@@ -162,3 +162,32 @@ class Kodi(object):
         #
         self.logger.debug('proposed view id {} for {} in mode {}', viewId, skinName, pViewname)
         return viewId;
+
+##############################################################
+
+    def get_entered_text(self, deftext=None, heading=None, hidden=False):
+        """
+        Asks the user to enter a text. The method returnes a tuple with
+        the text and the confirmation status: `( "Entered Text", True, )`
+
+        Args:
+            deftext(str|int, optional): Default text in the text entry box.
+                Can be a string or a numerical id to a localized text. This
+                text will be returned if the user selects `Cancel`
+
+            heading(str|int, optional): Heading text of the text entry UI.
+                Can be a string or a numerical id to a localized text.
+
+            hidden(bool, optional): If `True` the entered text is not
+                desplayed. Placeholders are used for every char. Default
+                is `False`
+        """
+        heading = self.localizeString(heading) if isinstance(heading, int) else heading if heading is not None else ''
+        deftext = self.localizeString(deftext) if isinstance(deftext, int) else deftext if deftext is not None else ''
+        keyboard = xbmc.Keyboard(deftext, heading, 1 if hidden else 0)
+        keyboard.doModal()
+        if keyboard.isConfirmed():
+            enteredText = keyboard.getText();
+            enteredText = pyUtils.py2_decode(enteredText);
+            return (enteredText, True, )
+        return (deftext, False, )

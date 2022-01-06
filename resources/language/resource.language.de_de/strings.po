@@ -57,6 +57,10 @@ msgctxt "#30010"
 msgid "Tags"
 msgstr "Tags"
 
+msgctxt "#30011"
+msgid "Search"
+msgstr "Suchen"
+
 msgctxt "#30100"
 msgid "Download"
 msgstr "Download"
