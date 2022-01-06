@@ -5,6 +5,7 @@ SPDX-License-Identifier: MIT
 """
 
 import os
+import re
 import sys
 import stat
 import string
@@ -182,10 +183,8 @@ def file_cleanupname(val):
     Args:
         val(str): input string
     """
-    cset = string.ascii_letters + string.digits + \
-        u' _-#äöüÄÖÜßáàâéèêíìîóòôúùû�?ÀÉÈ�?ÌÓÒÚÙçÇœ'
-    search = ''.join([c for c in val if c in cset])
-    return search.strip()
+    cStr = re.sub('[^A-Za-z0-9]+', '', val)
+    return cStr
 
 #########################################################################################
 
