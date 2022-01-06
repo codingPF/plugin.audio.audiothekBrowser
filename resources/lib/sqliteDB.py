@@ -50,7 +50,7 @@ class SqliteDB(object):
     def execute(self, aStmt, aParams=None):
         """ execute a single sql stmt and return the resultset """
         start = time.time()
-        # self.logger.debug('query: {} params {}', aStmt, aParams)
+        self.logger.debug('query: {} params {}', aStmt, aParams)
         cursor = self.getConnection().cursor()
         if aParams is None:
             cursor.execute(aStmt)
@@ -58,7 +58,7 @@ class SqliteDB(object):
             cursor.execute(aStmt, aParams)
         rs = cursor.fetchall()
         cursor.close()
-        # self.logger.debug('execute: {} rows in {} sec', len(rs), time.time() - start)
+        self.logger.debug('execute: {} rows in {} sec', len(rs), time.time() - start)
         return rs
 
     def executeUpdate(self, aStmt, aParams):
@@ -69,7 +69,7 @@ class SqliteDB(object):
         else:
             cursor.execute(aStmt, aParams)
         rs = cursor.rowcount
-        # self.logger.debug(" rowcount executeUpdate {}" , rs)
+        self.logger.debug(" rowcount executeUpdate {}" , rs)
         cursor.close()
         self.getConnection().commit()
         return rs
