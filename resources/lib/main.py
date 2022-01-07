@@ -86,10 +86,8 @@ class Main(Kodi):
             kodiPG = PG.KodiProgressDialog()
             kodiPG.create(30102)
             #
-            rs = self.db.getEpisode(parameterId)
-            url = rs[0][5]
-            name = rs[0][1]
-            name = pyUtils.file_cleanupname(name)
+            url = self.getParameters('targetUrl')
+            name = self.getParameters('filename')
             fullName = pyUtils.createPath((self.translatePath(self.settings.getDownloadPath()), name))
             pyUtils.url_retrieve(url, fullName, reporthook=kodiPG.update, chunk_size=65536, aborthook=self.getAbortHook())
             #
@@ -190,7 +188,7 @@ class Main(Kodi):
             if element[6]:
                 icon = element[6].replace('{ratio}', self.settings.getIconRatio()).replace('{width}', self.settings.getIconSize())
             #
-            cm = [(self.localizeString(30100),'RunPlugin({})'.format(self.generateUrl({'mode': "download",'id': element[0]})))]
+            cm = [(self.localizeString(30100),'RunPlugin({})'.format(self.generateUrl( { 'mode': 'download', 'filename': pyUtils.file_cleanupname(element[1]), 'targetUrl': element[5]})))]
             #
             pUI.addListItem(
                 pTitle=element[1], 
@@ -231,7 +229,7 @@ class Main(Kodi):
                 icon = element[2].replace('{ratio}', self.settings.getIconRatio()).replace('{width}', self.settings.getIconSize())
             #
             if len(element) > 3:
-                cm = [(self.localizeString(30100),'RunPlugin({})'.format(self.generateUrl({'mode': "download",'id': element[0]})))]
+                cm = [(self.localizeString(30100),'RunPlugin({})'.format(self.generateUrl( { 'mode': 'download', 'filename': pyUtils.file_cleanupname(element[1]), 'targetUrl': element[3]})))]
                 #
                 pUI.addListItem(
                     pTitle=element[1], 

@@ -5,9 +5,9 @@ SPDX-License-Identifier: MIT
 """
 
 import os
-import re
 import sys
 import stat
+import re
 import string
 import json
 import datetime
@@ -183,7 +183,8 @@ def file_cleanupname(val):
     Args:
         val(str): input string
     """
-    cStr = re.sub('[^A-Za-z0-9]+', '', val)
+    cStr = val.strip().replace(' ', '_')
+    cStr = re.sub(r'(?u)[^-\w.]', '', cStr)
     return cStr
 
 #########################################################################################

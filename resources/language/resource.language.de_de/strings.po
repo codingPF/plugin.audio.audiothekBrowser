@@ -72,3 +72,8 @@ msgstr "Ausgestrahlt: {0:s}[CR][CR]"
 msgctxt "#30102"
 msgid "Downloading"
 msgstr "Downloading"
+
+msgctxt "#30900"
+msgid "General"
+msgstr "Allgemein"
+
