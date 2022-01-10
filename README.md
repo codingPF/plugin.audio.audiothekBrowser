@@ -5,4 +5,4 @@
 
 Dieses [Kodi Mediacenter][1] plugin erlaubt es die Inhalte der [ARD Audiothek][2] direkt in Kodi zu durchsuchen und abzuspielen. Alle Daten (Audiodateien, Bilder, Icon) werden nicht gespeichert, sondern verlinken die ARD Audiothek.
 
-Viel Spaﬂ
+Viel Spa√ü

@@ -11,6 +11,7 @@ import re
 import string
 import json
 import datetime
+import base64
 from contextlib import closing
 from codecs import open
 try:
@@ -199,6 +200,22 @@ def loadJson(filename):
 def saveJson(filename, data):
     with closing(open(filename, 'w', encoding='utf-8')) as json_file:
         json.dump(cache, json_file)
+
+##########################################################################################
+
+
+def b64encode(pMessage):
+    message_bytes = pMessage.encode('ascii')
+    base64_bytes = base64.b64encode(message_bytes)
+    base64_message = base64_bytes.decode('ascii')
+    return base64_message
+
+
+def b64decode(pMessage):
+    base64_bytes = pMessage.encode('ascii')
+    message_bytes = base64.b64decode(base64_bytes)
+    message = message_bytes.decode('ascii')
+    return message
 
 
 def url_to_string(url, chunk_size=65536):

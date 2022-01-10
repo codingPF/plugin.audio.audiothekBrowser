@@ -4,9 +4,11 @@ Kodi Interface
 
 SPDX-License-Identifier: MIT
 """
+import sys
 import xbmc
 import xbmcvfs
-import sys
+import xbmcgui
+import xbmcplugin
 try:
     # Python 3.x
     from urllib.parse import urlencode
@@ -94,6 +96,20 @@ class Kodi(object):
         # BUG in urlencode which is solved in python 3
         utfEnsuredParams = pyUtils.dict_to_utf(params)
         return self._addonUrl + '?' + urlencode(utfEnsuredParams)
+
+    def playItem(self, pUrl, pSubTitle=None):
+
+        if self.getKodiVersion > 17:
+            listitem = xbmcgui.ListItem(path=pUrl, offscreen=True)
+        else:
+            listitem = xbmcgui.ListItem(path=pUrl)
+
+        listitem.setProperty('IsPlayable', 'true')
+
+        if pSubTitle is not None:
+            listitem.setSubtitles(pSubTitle)
+
+        xbmcplugin.setResolvedUrl(self.addon_handle, True, listitem)
 
     def executebuiltin(self, builtin):
         xbmc.executebuiltin(builtin)
