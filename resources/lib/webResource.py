@@ -98,7 +98,9 @@ class WebResource(object):
                 cycleCnt += 1
                 self.progressListener(cycleCnt*self.chunkSize, content_length)
             #
-            outstr = decomp.flush()
+            if decomp:
+                outstr = decomp.flush()
+                rsArrayBuffer.append(outstr)
             #
             outputString = b''.join(rsArrayBuffer)
             #
