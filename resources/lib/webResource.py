@@ -62,7 +62,7 @@ class WebResource(object):
         #
         request = Request(self.url)
         #
-        for kkey,vvalue in self.header.items():
+        for kkey,vvalue in list(self.header.items()):
             request.add_header(kkey, vvalue)
         #
         rsArrayBuffer = []
