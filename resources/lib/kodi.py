@@ -99,7 +99,7 @@ class Kodi(object):
 
     def playItem(self, pUrl, pSubTitle=None):
 
-        if self.getKodiVersion > 17:
+        if self.getKodiVersion() > 17:
             listitem = xbmcgui.ListItem(path=pUrl, offscreen=True)
         else:
             listitem = xbmcgui.ListItem(path=pUrl)
