@@ -201,6 +201,16 @@ def saveJson(filename, data):
     with closing(open(filename, 'w', encoding='utf-8')) as json_file:
         json.dump(cache, json_file)
 
+def extractJsonValue(rootElement, *args):
+    root = rootElement;
+    for searchPath in args:
+        if root is None:
+            return None
+        elif isinstance(root, list):
+            root = root[searchPath]
+        else:
+            root = root.get(searchPath)
+    return root;
 ##########################################################################################
 
 

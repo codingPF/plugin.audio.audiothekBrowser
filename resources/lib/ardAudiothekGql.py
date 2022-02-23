@@ -183,74 +183,57 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
         self.db.deleteCategory();
         self.db.deleteLivestream();
         #
+        #self.logger.debug('dataString {}',dataString)
         data = json.loads(dataString)
         #
-        data = data.get('data').get('organizations').get('nodes')
+        data = self.makeArray(pyUtils.extractJsonValue(data, 'data', 'organizations', 'nodes'))
         for organization in data:
-            elementOrganizationId = organization.get('rowId')
-            elementOrganizationName = organization.get('title')
+            elementOrganizationId = pyUtils.extractJsonValue(organization, 'rowId')
+            elementOrganizationName = pyUtils.extractJsonValue(organization, 'title')
             elementOrganizationImage = None
-            # self.logger.debug("ORGA: {} # {} # {}", elementOrganizationId, elementOrganizationName, elementOrganizationImage)
             #
-            # one element is not retured as array
-            publicationArray = []
-            nextElement = organization.get('publicationServicesByOrganizationName').get('nodes')
-            if isinstance(nextElement, list):
-                publicationArray = nextElement
-            else:
-                publicationArray.append(nextElement)
+            publicationArray = self.makeArray(pyUtils.extractJsonValue(organization, 'publicationServicesByOrganizationName', 'nodes'))
             #
             # i want images very hard
             for publicationService in publicationArray:
-                if publicationService.get('organizationName').upper() == publicationService.get('title').upper():
-                    elementOrganizationImage = self._templateImages(publicationService.get('image').get('url'))
+                if pyUtils.extractJsonValue(publicationService, 'organizationName') and pyUtils.extractJsonValue(publicationService,'title') and \
+                pyUtils.extractJsonValue(publicationService, 'organizationName').upper() == pyUtils.extractJsonValue(publicationService,'title').upper():
+                    elementOrganizationImage = self._templateImages(pyUtils.extractJsonValue(publicationService,'image','url'))
             if not elementOrganizationImage:
-                elementOrganizationImage = self._templateImages(publicationArray[0].get('image').get('url'))
+                elementOrganizationImage = self._templateImages(pyUtils.extractJsonValue(organization,'image','url'))
             #
+            #  lets do the real work
             for publicationService in publicationArray:
-                elementChannel = publicationService.get('rowId')
-                elementChannelName = publicationService.get('title')
-                elementChannelOrganization = publicationService.get('organizationName')
-                elementChannelDescription = publicationService.get('synopsis')
-                elementChannelImage = self._templateImages(publicationService.get('image').get('url'))
+                elementChannel = pyUtils.extractJsonValue(publicationService, 'rowId')
+                elementChannelName = pyUtils.extractJsonValue(publicationService, 'title')
+                elementChannelOrganization = pyUtils.extractJsonValue(publicationService, 'organizationName')
+                elementChannelDescription = pyUtils.extractJsonValue(publicationService, 'synopsis')
+                elementChannelImage = self._templateImages(pyUtils.extractJsonValue(publicationService, 'image', 'url'))
                 if elementChannelOrganization == elementChannelName:
                     elementOrganizationImage = elementChannelImage
                 #
-                if publicationService.get('permanentLivestreams').get('nodes') != None \
-                and len(publicationService.get('permanentLivestreams').get('nodes')) > 0:
-                    livestreamArray = []
-                    testLivestreamArray = publicationService.get('permanentLivestreams').get('nodes')
-                    if isinstance(testLivestreamArray, list):
-                        livestreamArray = testLivestreamArray
-                    else:
-                        livestreamArray.append(testLivestreamArray)
-                    #
-                    for livestreamElement in livestreamArray:
-                        if livestreamElement.get('audios') != None:
-                            elementChannelLivestream = livestreamElement.get('audios')[0].get('url')
+                testLivestreamArray = self.makeArray(pyUtils.extractJsonValue(publicationService, 'permanentLivestreams', 'nodes'))
+                if len(testLivestreamArray) > 0:
+                    for livestreamElement in testLivestreamArray:
+                        if pyUtils.extractJsonValue(livestreamElement,'audios') != None:
+                            #elementChannelLivestream = livestreamElement.get('audios')[0].get('url')
+                            elementChannelLivestream = pyUtils.extractJsonValue(livestreamElement,'audios',0,'url')
                             self.db.addLivestream(elementChannel, (elementChannel, elementChannelName, elementChannelImage, elementChannelLivestream, elementChannelDescription))
                             break
                 else:
                     elementChannelLivestream = ''
-                # self.logger.debug("CHANNEL: {} # {} # {} # {}", elementChannel, elementChannelName, elementChannelImage, elementChannelLivestream)
                 #
-                # one element is not retured as array
-                categoryArray = []
-                nextElement = publicationService.get('programSets').get('nodes')
-                if isinstance(nextElement, list):
-                    categoryArray = nextElement
-                else:
-                    categoryArray.append(nextElement)
+                categoryArray = self.makeArray(pyUtils.extractJsonValue(publicationService, 'programSets', 'nodes'))
                 #
                 for category in categoryArray:
                     numberOfElement = category.get('numberOfElements')
                     if numberOfElement and int(numberOfElement) > 0:
-                        categoryId = category.get('id')
-                        categoryName = category.get('title')
-                        categoryImage = self._templateImages(category.get('image').get('url'))
-                        if category.get('editorialCategory'):
-                            tags = category.get('editorialCategory').get('title')
-                            tagImage = category.get('editorialCategory').get('image').get('url')
+                        categoryId = pyUtils.extractJsonValue(category, 'id')
+                        categoryName = pyUtils.extractJsonValue(category, 'title')
+                        categoryImage = self._templateImages(pyUtils.extractJsonValue(category, 'image', 'url'))
+                        if pyUtils.extractJsonValue(category, 'editorialCategory'):
+                            tags = pyUtils.extractJsonValue(category, 'editorialCategory', 'title')
+                            tagImage = pyUtils.extractJsonValue(category, 'editorialCategory', 'image', 'url')
                         else:
                             tags = None
                             tagImage = None
@@ -301,23 +284,16 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
         #
         data = json.loads(dataString)
         #
-        episodeArray = []
-        data = data.get('data').get('programSet').get('items').get('nodes')
-        if data == None:
-            return
-        elif isinstance(data, list):
-            episodeArray = data
-        else:
-            episodeArray.append(data)
+        episodeArray = self.makeArray(pyUtils.extractJsonValue(data, 'data', 'programSet', 'items', 'nodes'))
         #
         for episode in episodeArray:
-            episodeId = episode.get('id')
-            episodeTitle = episode.get('title')
-            episodeDuration = episode.get('duration')
-            episodeAired = self._parseTimestamp(episode.get('publishDate'))
-            episodeDescription = episode.get('synopsis')
-            episodeUrl = episode.get('audios')[0].get('url')
-            episodeImage = self._templateImages(episode.get('image').get('url'))
+            episodeId = pyUtils.extractJsonValue(episode, 'id')
+            episodeTitle =  pyUtils.extractJsonValue(episode, 'title')
+            episodeDuration =  pyUtils.extractJsonValue(episode, 'duration')
+            episodeAired = self._parseTimestamp( pyUtils.extractJsonValue(episode, 'publishDate'))
+            episodeDescription =  pyUtils.extractJsonValue(episode, 'synopsis')
+            episodeUrl =  pyUtils.extractJsonValue(episode, 'audios', 0, 'url')
+            episodeImage = self._templateImages(pyUtils.extractJsonValue(episode,'image','url'))
             recordEpisodeCount += 1
             insertEpisodeCount += self.db.addEpisode(episodeId, (pBroadcast, episodeId, episodeTitle, episodeDuration, episodeAired, episodeDescription, episodeUrl, episodeImage, int(time.time())))
             #
@@ -328,6 +304,8 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
         self.logger.info('loadEpisode ( {} / {} ) in {} sec(s)', insertEpisodeCount, recordEpisodeCount, (time.time() - self.starttime))
 
     def _parseTimestamp(self, pTimestamp):
+        if not pTimestamp:
+            return None
         y = pTimestamp[0:4]
         m = pTimestamp[5:7]
         d = pTimestamp[8:10]
@@ -344,6 +322,8 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
         return int((dt - datetime.datetime(year=1970, month=1, day=1)).total_seconds())
 
     def _templateImages(self, pImageUrl):
+        if not pImageUrl:
+            return None
         return pImageUrl.replace('/16x9/{width}','/{ratio}/{width}')
     
     def query(self, pSearchTerms, pOffset=0, pLimit=999):
@@ -367,17 +347,32 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
         data = json.loads(dataString)
         self.logger.debug('received {}',dataString)
         #
-        broadcasts = []
-        broadcasts = data.get('data').get('search').get('programSets')
+        broadcasts = self.makeArray(pyUtils.extractJsonValue(data, 'data', 'search', 'programSets','nodes'))
+        for broadcast in broadcasts:
+            rs.append([pyUtils.extractJsonValue(broadcast, 'id'), pyUtils.extractJsonValue(broadcast, 'title'), pyUtils.extractJsonValue(broadcast, 'image', 'url')])
+                
         #
-        if broadcasts:
-            for broadcast in broadcasts.get('nodes'):
-                rs.append([broadcast.get('id'), broadcast.get('title'), self._templateImages(broadcast.get('image').get('url'))])
-        #
-        episodes = []
-        episodes = data.get('data').get('search').get('items')
-        if episodes:
-            for episode in episodes.get('nodes'):
-                rs.append([episode.get('id'), episode.get('title'), self._templateImages(episode.get('image').get('url')), episode.get('audios')[0].get('url'),episode.get('duration'),self._parseTimestamp(episode.get('publishDate')),episode.get('synopsis')])
+        episodes = self.makeArray(pyUtils.extractJsonValue(data, 'data', 'search', 'items','nodes'))
+        for episode in episodes:
+            rs.append(
+                [pyUtils.extractJsonValue(episode, 'id'),
+                 pyUtils.extractJsonValue(episode, 'title'),
+                 self._templateImages(pyUtils.extractJsonValue(episode, 'image', 'url')),
+                 pyUtils.extractJsonValue(episode, 'audios', 0, 'url'),
+                 pyUtils.extractJsonValue(episode, 'duration'),
+                 self._parseTimestamp(pyUtils.extractJsonValue(episode, 'publishDate')),
+                 pyUtils.extractJsonValue(episode, 'synopsis')]
+            )
         #
         return rs
+
+    # sometimes arrays are elements insteada of arrays
+    def makeArray(self, element):
+        elementArray = []
+        if not element:
+            return elementArray
+        if isinstance(element, list):
+            elementArray = element
+        else:
+            elementArray.append(element)
+        return elementArray
