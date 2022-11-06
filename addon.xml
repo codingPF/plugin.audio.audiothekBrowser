@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="plugin.audio.audiothekBrowser"
     name="Audiothek Browser"
-    version="1.2.3"
+    version="1.2.4"
     provider-name="CodingPF">
     <requires>
         <import addon="xbmc.python" version="2.25.0"/>
@@ -17,6 +17,10 @@
         <description lang="de_DE">Ein Kodi Plugin um die ARD Audiothek in Kodi zu durchsuchen</description>
         <description lang="en_GB">Browse the ARD Audiothek using Kodi</description>
         <news>
+v.1.2.4
+[fix] icon issue for organization
+[feature] add elements gt 0 filter on request
+[fix] sort order for folders 
 v.1.2.3
 fix NPT
 v.1.2.2
