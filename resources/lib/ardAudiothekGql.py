@@ -60,7 +60,7 @@ class ArdAudiothekGql(object):
        }
       }
      }
-     programSets {
+     programSets( filter: { numberOfElements: { greaterThan: 0 } } ) {
       nodes {
        numberOfElements
        id
@@ -199,6 +199,8 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
                 if pyUtils.extractJsonValue(publicationService, 'organizationName') and pyUtils.extractJsonValue(publicationService,'title') and \
                 pyUtils.extractJsonValue(publicationService, 'organizationName').upper() == pyUtils.extractJsonValue(publicationService,'title').upper():
                     elementOrganizationImage = self._templateImages(pyUtils.extractJsonValue(publicationService,'image','url'))
+            if not elementOrganizationImage:
+                elementOrganizationImage = self._templateImages(pyUtils.extractJsonValue(publicationArray, 0,'image','url'))
             if not elementOrganizationImage:
                 elementOrganizationImage = self._templateImages(pyUtils.extractJsonValue(organization,'image','url'))
             #

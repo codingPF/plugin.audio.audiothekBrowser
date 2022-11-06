@@ -202,14 +202,21 @@ def saveJson(filename, data):
         json.dump(cache, json_file)
 
 def extractJsonValue(rootElement, *args):
+    if rootElement is None:
+        return None
+    #
     root = rootElement;
     for searchPath in args:
-        if root is None:
-            return None
-        elif isinstance(root, list):
-            root = root[searchPath]
+        if isinstance(root, list):
+            if len(root) > searchPath:
+                root = root[searchPath]
+            else:
+                return None
         else:
-            root = root.get(searchPath)
+            if searchPath in root:
+                root = root.get(searchPath)
+            else:
+                return None
     return root;
 ##########################################################################################
 

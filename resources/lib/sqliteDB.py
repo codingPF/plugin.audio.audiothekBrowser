@@ -151,11 +151,11 @@ class SqliteDB(object):
 ####################################################
 
     def getLivestream(self):
-        sql = "SELECT livestreamId, livestreamName, livestreamImage, livestreamUrl, livestreamDescription FROM livestream ORDER BY livestreamName asc"
+        sql = "SELECT livestreamId, livestreamName, livestreamImage, livestreamUrl, livestreamDescription FROM livestream ORDER BY upper(livestreamName) asc"
         return self.execute(sql, None)
 
     def getOrganizations(self):
-        sql = "SELECT organizationId, organizationName, organizationImage FROM category GROUP BY organizationId, organizationName, organizationImage ORDER BY organizationName asc"
+        sql = "SELECT organizationId, organizationName, organizationImage FROM category GROUP BY organizationId, organizationName, organizationImage ORDER BY upper(organizationName) asc"
         return self.execute(sql, None)
 
     def getChannel(self, pOrganizationId=None):
@@ -164,7 +164,7 @@ class SqliteDB(object):
         if pOrganizationId != None:
             sql += " WHERE organizationId = ?"
             params.append(pOrganizationId)
-        sql += " GROUP BY channelId, channelName, channelImage ORDER BY channelName asc"
+        sql += " GROUP BY channelId, channelName, channelImage ORDER BY upper(channelName)"
         return self.execute(sql, params)
 
     def getBroadcast(self, pChannel=None):
@@ -173,7 +173,7 @@ class SqliteDB(object):
         if pChannel != None:
             sql += " WHERE channelId = ?"
             params.append(pChannel)
-        sql += ' ORDER BY broadcastName'
+        sql += ' ORDER BY upper(broadcastName)'
         return self.execute(sql, params)
 
     def getEpisodes(self, pBroadcast=None):
@@ -197,7 +197,7 @@ class SqliteDB(object):
         if pTags != None:
             sql += " AND tags = ?"
             params.append(pTags)
-        sql +=  ' GROUP BY tags ORDER BY tags'
+        sql +=  ' GROUP BY tags ORDER BY upper(tags)'
         return self.execute(sql, params)
 
     def getTag(self, pTags=None):
@@ -206,5 +206,5 @@ class SqliteDB(object):
         if pTags != None:
             sql += " WHERE tags = ?"
             params.append(pTags)
-        sql += ' ORDER BY broadcastName'
+        sql += ' ORDER BY upper(broadcastName)'
         return self.execute(sql, params)
