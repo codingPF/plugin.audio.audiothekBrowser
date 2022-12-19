@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 import time
 import xbmcplugin
 import xbmcgui
+import xbmc
 import datetime
 import resources.lib.appContext as appContext
 
@@ -15,7 +16,7 @@ class KodiUI(object):
     ###########
     #
     ###########
-    def __init__(self, pAddon, pContentType = 'video', pSortMethods = None, pCacheToDisc = False ):
+    def __init__(self, pAddon, pContentType = '', pSortMethods = None, pCacheToDisc = False, pViewId = None ):
         self.logger = appContext.LOGGER.getInstance('KodiUI')
         self.setting = appContext.SETTINGS
         self.addon = pAddon
@@ -32,10 +33,26 @@ class KodiUI(object):
         #
         self.contentType = pContentType
         self.cacheToDisc = pCacheToDisc
+        self.viewId = pViewId
         self.listItems = []
         self.startTime = 0
         self.tzBase = datetime.datetime.fromtimestamp(0)
+        # just for documentation
+        self.docuContentTypes = ['','video','movies']
 
+
+    def addDirectoryItem(self, pTitle, pUrl, pSortTitle = None, pIcon = None, pContextMenu = None):
+        self.addListItem(
+            pTitle=pTitle, 
+            pUrl=pUrl, 
+            pSortTitle=None, 
+            pPlot=None, 
+            pDuration= None, 
+            pAired= None, 
+            pIcon=pIcon, 
+            pContextMenu=pContextMenu,
+            pPlayable='False',
+            pFolder=True)
 
     def addListItem(self, pTitle, pUrl, pSortTitle = None, pPlot = None, pDuration = None, pAired = None, pIcon = None, pContextMenu = None, pPlayable = 'True', pFolder = False):
         #
@@ -48,27 +65,30 @@ class KodiUI(object):
             listItem = xbmcgui.ListItem(label=pTitle, path=pUrl)
         #
         if pPlayable == 'True':
-            info_labels = {
-                'title': pTitle,
-                'sorttitle': pSortTitle if pSortTitle else pTitle.lower(),
-                'tvshowtitle': pTitle,
-                'plot': pPlot if pPlot else ''
-            }
+            tag = listItem.getVideoInfoTag()
+            tag.setTitle(pTitle)
+            tag.setOriginalTitle(pTitle)
+            tag.setSortTitle(pSortTitle if pSortTitle else pTitle.lower())
+            tag.setTvShowTitle(pTitle)
+            tag.setPlot(pPlot if pPlot else '')
             #
             if pDuration:
-                info_labels['duration'] = '{:02d}:{:02d}:00'.format(*divmod(pDuration, 60))
+                tag.setDuration(pDuration)
             #
             if pAired:
-                ndate = self.tzBase + datetime.timedelta(seconds=(pAired))
-                airedstring = ndate.isoformat().replace('T', ' ')
-                info_labels['date'] = airedstring[:10]
-                info_labels['aired'] = airedstring[:10]
-                info_labels['dateadded'] = airedstring
+                if type(pAired) in (type(''), type(u'')):
+                    ndate = pAired
+                else:
+                    ndate = (self.tzBase + datetime.timedelta(seconds=(pAired))).isoformat()
+                airedstring = ndate.replace('T', ' ')
+                tag.setDateAdded(airedstring) # (YYYY-MM-DD HH:MM:SS)
+                tag.setFirstAired(airedstring[:10])
+                tag.setLastPlayed(airedstring) #(YYYY-MM-DD HH:MM:SS)
+                tag.setPremiered(airedstring[:10])
+                tag.setYear(int(airedstring[:4]))
+                listItem.setDateTime(ndate) #YYYY-MM-DDThh:mm[TZD]
+                tag.setPlot(self.addon.localizeString(30101).format(airedstring) + (pPlot if pPlot else ''))
                 #
-                info_labels['plot'] = self.addon.localizeString(30101).format(airedstring) + info_labels['plot']
-                #
-            # tpye is video to have plot and aired date etc.
-            listItem.setInfo(type='video', infoLabels=info_labels)
             #
         #
         listItem.setProperty('IsPlayable', pPlayable)
@@ -103,6 +123,9 @@ class KodiUI(object):
         )
         #
         xbmcplugin.endOfDirectory(self.addon.addon_handle, cacheToDisc=self.cacheToDisc)
+        #
+        if self.viewId:
+            xbmc.executebuiltin('Container.SetViewMode({})'.format(self.viewId))
         #
         self.logger.debug('generated {} item(s) in {} sec', len(self.listItems), round(time.time() - self.startTime, 4))
 
