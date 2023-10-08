@@ -11,6 +11,7 @@ import re
 import string
 import json
 import datetime
+import time
 import base64
 from contextlib import closing
 from codecs import open
@@ -87,6 +88,11 @@ def epoch_from_timestamp(pTimestampString, pTsPatter='%Y-%m-%dT%H:%M:%S.%f%z'):
     new_time = datetime.datetime.strptime(pTimestampString, pTsPatter)
     return int(new_time.timestamp())
 
+def datetime_from_utc_to_local(utc_datetime):
+    now_timestamp = time.time()
+    offset = datetime.datetime.fromtimestamp(now_timestamp) - datetime.datetime.utcfromtimestamp(now_timestamp)
+    return utc_datetime + offset
+    
 #########################################################################
 # FILE functions
 
@@ -188,19 +194,6 @@ def file_cleanupname(val):
     cStr = re.sub(r'(?u)[^-\w.]', '', cStr)
     return cStr
 
-#########################################################################################
-
-
-def loadJson(filename):
-    with closing(open(filename, encoding='utf-8')) as json_file:
-        data = json.load(json_file)
-    return data
-
-
-def saveJson(filename, data):
-    with closing(open(filename, 'w', encoding='utf-8')) as json_file:
-        json.dump(cache, json_file)
-
 def extractJsonValue(rootElement, *args):
     if rootElement is None:
         return None
@@ -218,6 +211,20 @@ def extractJsonValue(rootElement, *args):
             else:
                 return None
     return root;
+    
+#########################################################################################
+
+
+def loadJson(filename):
+    with closing(open(filename, encoding='utf-8')) as json_file:
+        data = json.load(json_file)
+    return data
+
+
+def saveJson(filename, data):
+    with closing(open(filename, 'w', encoding='utf-8')) as json_file:
+        json.dump(cache, json_file)
+
 ##########################################################################################
 
 
@@ -234,6 +241,7 @@ def b64decode(pMessage):
     message = message_bytes.decode('ascii')
     return message
 
+###########################################################################################
 
 def url_to_string(url, chunk_size=65536):
     output = ''
