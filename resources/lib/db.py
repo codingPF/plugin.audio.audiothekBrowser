@@ -6,73 +6,19 @@ SPDX-License-Identifier: MIT
 
 # pylint: disable=too-many-lines,line-too-long
 import time
-import sqlite3
-import resources.lib.appContext as appContext
-import resources.lib.utils as pyUtils
+from ckfw import utils as pyUtils
+from ckfw.sqliteDB import SqliteDB as SqliteDB
 
-
-class SqliteDB(object):
+class DB(SqliteDB):
     """
     The local SQlite database class
 
     """
 
-    def __init__(self, databaseFilename):
-        self.logger = appContext.LOGGER.getInstance('SqliteDB')
-        self.databaseFilename = databaseFilename
+    def __init__(self, addon, databaseFilename):
+        super(DB, self).__init__(addon, databaseFilename)
+        self.logger = self.addon.createLogger('SqliteDB')
         self.logger.debug('DB File {}', self.databaseFilename)
-        self.conn = None
-
-    def reset(self):
-        try:
-            self.exit()
-        except Exception as err:
-            pass
-        rt = pyUtils.file_remove(self.databaseFilename)
-        self.conn = None
-        self.logger.debug('DB Reset {}', rt)
-
-    def getConnection(self):
-        if self.conn is None:
-            self.conn = sqlite3.connect(self.databaseFilename, timeout=60)
-            self.conn.execute('pragma synchronous=off')
-            self.conn.execute('pragma journal_mode=off')
-            self.conn.execute('pragma page_size=65536')
-            self.conn.execute('pragma encoding="UTF-8"')
-        return self.conn
-
-    def exit(self):
-        if self.conn is not None:
-            self.conn.commit()
-            self.conn.close()
-            self.conn = None
-
-    def execute(self, aStmt, aParams=None):
-        """ execute a single sql stmt and return the resultset """
-        start = time.time()
-        self.logger.debug('query: {} params {}', aStmt, aParams)
-        cursor = self.getConnection().cursor()
-        if aParams is None:
-            cursor.execute(aStmt)
-        else:
-            cursor.execute(aStmt, aParams)
-        rs = cursor.fetchall()
-        cursor.close()
-        self.logger.debug('execute: {} rows in {} sec', len(rs), time.time() - start)
-        return rs
-
-    def executeUpdate(self, aStmt, aParams):
-        """ execute a single update stmt and commit """
-        cursor = self.getConnection().cursor()
-        if aParams is None:
-            cursor.execute(aStmt)
-        else:
-            cursor.execute(aStmt, aParams)
-        rs = cursor.rowcount
-        self.logger.debug(" rowcount executeUpdate {}" , rs)
-        cursor.close()
-        self.getConnection().commit()
-        return rs
 
     def isInitialized(self):
         rt = False

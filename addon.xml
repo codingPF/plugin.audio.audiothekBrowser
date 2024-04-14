@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="plugin.audio.audiothekBrowser"
     name="Audiothek Browser"
-    version="1.2.5"
+    version="1.3.0"
     provider-name="CodingPF">
     <requires>
         <import addon="xbmc.python" version="2.25.0"/>
+        <import addon="script.module.ckfw" version="1.0.0"/>
     </requires>
     <extension
         point="xbmc.python.pluginsource"
@@ -17,6 +18,8 @@
         <description lang="de_DE">Ein Kodi Plugin um die ARD Audiothek in Kodi zu durchsuchen</description>
         <description lang="en_GB">Browse the ARD Audiothek using Kodi</description>
         <news>
+v1.3.0
+[feature] Kodi21 release and move to framework
 v.1.2.5
 [feature] new build script adjustments
 v.1.2.4

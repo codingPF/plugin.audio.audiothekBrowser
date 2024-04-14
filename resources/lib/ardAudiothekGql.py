@@ -8,10 +8,9 @@ SPDX-License-Identifier: MIT
 import json
 import datetime
 import time
-import resources.lib.appContext as appContext
-import resources.lib.utils as pyUtils
-import resources.lib.kodiProgressDialog as PG
-import resources.lib.webResource as WebResource
+from ckfw import utils as pyUtils
+from ckfw import kodiProgressDialog as PG
+from ckfw import webResource as WebResource
 
 
 class ArdAudiothekGql(object):
@@ -19,11 +18,11 @@ class ArdAudiothekGql(object):
     RefreshArdAudiothek
     """
 
-    def __init__(self, pDb, pAbortHook):
-        self.logger = appContext.LOGGER.getInstance('RefreshArdAudiothekGQL')
-        self.settings = appContext.SETTINGS
+    def __init__(self, pAddon, pDb):
+        self.addon = pAddon
+        self.logger = self.addon.createLogger('RefreshArdAudiothekGQL')
         self.db = pDb
-        self.abortHook = pAbortHook        
+        self.abortHook = self.addon.getAbortHook()        
         self.kodiPG = None
         self.starttime = time.time()
         #
@@ -148,7 +147,7 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
     def run(self):
         #
         if not(self.db.isInitialized()):
-            self.settings.setLastUpdateIndex('0')
+            self.addon.setLastUpdateIndex('0')
             self.db.create()
         #
         self.loadcategory()
@@ -159,20 +158,20 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
         recordCategoryCount = 0
         insertCategoryCount = 0
         #
-        age = int((time.time() - self.settings.getLastUpdateIndex()) / 60)
-        if age < self.settings.getUpdateInterval():
-            self.logger.debug('Index is up-to-date age: {} / {}', age, self.settings.getUpdateInterval())
+        age = int((time.time() - self.addon.getLastUpdateIndex()) / 60)
+        if age < self.addon.getUpdateInterval():
+            self.logger.debug('Index is up-to-date age: {} / {}', age, self.addon.getUpdateInterval())
             return
         else:
-            self.logger.debug('Update index due to age: {} / {} last {} cTime {}', age, self.settings.getUpdateInterval(), self.settings.getLastUpdateIndex(), int(time.time()))
+            self.logger.debug('Update index due to age: {} / {} last {} cTime {}', age, self.addon.getUpdateInterval(), self.addon.getLastUpdateIndex(), int(time.time()))
         #
-        self.kodiPG = PG.KodiProgressDialog()
+        self.kodiPG = self.addon.getProgressDialog()
         self.kodiPG.create(30100)
         # dataString = pyUtils.url_to_string('https://api.ardaudiothek.de/organizations/')
         try:
             url = pyUtils.build_external_url(self.apiUrl, {'query':self.categoryQuery})
             self.logger.debug('url {}',url)
-            dn = WebResource.WebResource(url, pProgressListener=self.kodiPG.updateProgress, pAbortHook=self.abortHook)
+            dn = WebResource.WebResource(self.addon, url)
             dataString = dn.retrieveAsString()
         except Exception as err:
             self.logger.error('Failure downloading {}', err)
@@ -248,9 +247,9 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
                     #
                     self.kodiPG.updateProgress(recordCategoryCount, 1000)
         #
-        self.settings.setLastUpdateIndex(str(int(time.time())))
+        self.addon.setLastUpdateIndex(str(int(time.time())))
         self.kodiPG.close()
-        self.logger.info('last update {} vs {}', str(int(time.time())), self.settings.getLastUpdateIndex())
+        self.logger.info('last update {} vs {}', str(int(time.time())), self.addon.getLastUpdateIndex())
         #
         self.logger.info('refreshed categories ( {} / {} ) in {} sec(s)', insertCategoryCount, recordCategoryCount, (time.time() - self.starttime))
 
@@ -261,13 +260,13 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
         #
         lastUpdate = self.db.getastLoadEpisode(pBroadcast)
         age = int((time.time() - lastUpdate) / 60)
-        if (age < self.settings.getUpdateInterval()):
-            self.logger.debug('Episode is up-to-date age: {} / {}', age, self.settings.getUpdateInterval())
+        if (age < self.addon.getUpdateInterval()):
+            self.logger.debug('Episode is up-to-date age: {} / {}', age, self.addon.getUpdateInterval())
             return
         else:
-            self.logger.debug('Update Episodes age: {} / {} last {} cTime {}', age, self.settings.getUpdateInterval(), lastUpdate, int(time.time()))
+            self.logger.debug('Update Episodes age: {} / {} last {} cTime {}', age, self.addon.getUpdateInterval(), lastUpdate, int(time.time()))
         #
-        self.kodiPG = PG.KodiProgressDialog()
+        self.kodiPG = self.addon.getProgressDialog()
         self.kodiPG.create(30100)
         #
         params = {'id': int(pBroadcast), 'limit': 999, 'offset': 0}
@@ -276,7 +275,7 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
         self.logger.debug('Download {}', url)
         # dataString = pyUtils.url_to_string(url)
         try:
-            dn = WebResource.WebResource(url, pProgressListener=self.kodiPG.updateProgress, pAbortHook=self.abortHook)
+            dn = WebResource.WebResource(self.addon, url)
             dataString = dn.retrieveAsString()
         except Exception as err:
             self.logger.error('Failure downloading {}', err)
@@ -332,14 +331,14 @@ query ($query:String!, $offset:Int!, $limit:Int!) {
         #
         rs = []
         #
-        self.kodiPG = PG.KodiProgressDialog()
+        self.kodiPG = self.addon.getProgressDialog()
         self.kodiPG.create(30006)
         params = {'query': pSearchTerms, 'limit': pLimit, 'offset': pOffset}
         self.logger.debug('params: {}',json.dumps(params))
         url = pyUtils.build_external_url(self.apiUrl, {'query':self.searchQuery, 'variables':json.dumps(params)})
         self.logger.debug('Download {}', url)
         try:
-            dn = WebResource.WebResource(url, pProgressListener=self.kodiPG.updateProgress, pAbortHook=self.abortHook)
+            dn = WebResource.WebResource(self.addon, url)
             dataString = dn.retrieveAsString()
         except Exception as err:
             self.logger.error('Failure downloading {}', err)

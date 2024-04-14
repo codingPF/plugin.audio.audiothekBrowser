@@ -8,29 +8,25 @@ SPDX-License-Identifier: MIT
 import xbmcplugin
 import time
 import os
-import resources.lib.appContext as appContext
-import resources.lib.utils as pyUtils
-import resources.lib.kodiUi as KodiUI
-import resources.lib.sqliteDB as SqliteDb
-from resources.lib.ardAudiothekGql import ArdAudiothekGql
-from resources.lib.kodi import Kodi
-import resources.lib.kodiProgressDialog as PG
+from ckfw import utils as pyUtils
+from ckfw import kodiUi as KodiUI
+from ckfw.kodi import Kodi
+from ckfw import kodiProgressDialog as PG
+from .db import DB
+from .ardAudiothekGql import ArdAudiothekGql
 #
-
-
 class Main(Kodi):
 
     def __init__(self):
         super(Main, self).__init__()
-        self.logger = appContext.LOGGER.getInstance('Main')
-        self.settings = appContext.SETTINGS
+        self.logger = self.createLogger('Main')
         # ensure we have settings and a addon data directory
         self.setSetting('lastUsed', str(int(time.time())))
         #
-        self.db = SqliteDb.SqliteDB(pyUtils.createPath((self.getAddonDataPath(), 'audiothekDB.db')))
+        self.db = DB(self, pyUtils.createPath((self.getAddonDataPath(), 'audiothekDB.db')))
         # print(datetime.datetime.strptime("21/11/06 16:30", "%d/%m/%y %H:%M"))
         # print(str(pyUtils.epoch_from_timestamp('2020-11-07T16:12:13.987+0100', '%Y-%m-%dT%H:%M:%S.%f%z')))
-        self.refresh = ArdAudiothekGql(self.db, self.getAbortHook())
+        self.refresh = ArdAudiothekGql(self, self.db)
         self.refresh.run()
         #
 
@@ -73,7 +69,7 @@ class Main(Kodi):
             if pQuery and pQuery[1]:
                 cmd = 'Container.refresh({})'.format(self.generateUrl({'mode': "searchQuery",'queryString': pQuery[0]}))
                 self.logger.debug('cmd {}',cmd)
-                xbmcplugin.endOfDirectory(self.addon_handle, cacheToDisc=False)
+                xbmcplugin.endOfDirectory(self._addon_handle, cacheToDisc=False)
                 self.executebuiltin(cmd)
             #
         elif mode == 'searchQuery':
@@ -88,7 +84,7 @@ class Main(Kodi):
             #
             url = self.getParameters('targetUrl')
             name = self.getParameters('filename')
-            fullName = pyUtils.createPath((self.translatePath(self.settings.getDownloadPath()), name))
+            fullName = pyUtils.createPath((self.translatePath(self.getDownloadPath()), name))
             pyUtils.url_retrieve(url, fullName, reporthook=kodiPG.update, chunk_size=65536, aborthook=self.getAbortHook())
             #
             kodiPG.close()
@@ -104,6 +100,31 @@ class Main(Kodi):
         self.db.exit()
 
     ##########
+    
+    
+        # General
+    def getIconSize(self):
+        return self.getSetting('iconSize')
+
+    def getIconRatio(self):
+        return self.getSetting('iconRatio')
+
+    def getLastUpdateIndex(self):
+        try:
+            return int(self.getSetting('lastUpdateIndex'))
+        except Exception:
+            return 0
+
+    def setLastUpdateIndex(self, pValue):
+        self.setSetting('lastUpdateIndex', pValue)
+
+    def getUpdateInterval(self):
+        return int(self.getSetting('updateInterval'))
+
+    def getDownloadPath(self):
+        return self.getSetting('downloadPath')
+    
+    #############
 
     def getMainMenuData(self, pUI):
         pUI.addListItem(
@@ -163,7 +184,7 @@ class Main(Kodi):
         for element in pData:
             icon = None
             if element[2]:
-                icon = element[2].replace('{ratio}', self.settings.getIconRatio()).replace('{width}', self.settings.getIconSize())
+                icon = element[2].replace('{ratio}', self.getIconRatio()).replace('{width}', self.getIconSize())
             #
             targetUrl = pyUtils.build_url({
                 'mode': pTargetMode,
@@ -186,7 +207,7 @@ class Main(Kodi):
         for element in pData:
             icon = None
             if element[6]:
-                icon = element[6].replace('{ratio}', self.settings.getIconRatio()).replace('{width}', self.settings.getIconSize())
+                icon = element[6].replace('{ratio}', self.getIconRatio()).replace('{width}', self.getIconSize())
             #
             cm = [(self.localizeString(30100),'RunPlugin({})'.format(self.generateUrl( { 'mode': 'download', 'filename': pyUtils.file_cleanupname(element[1]), 'targetUrl': element[5]})))]
             #
@@ -208,7 +229,7 @@ class Main(Kodi):
         for element in pData:
             icon = None
             if element[2]:
-                icon = element[2].replace('{ratio}', self.settings.getIconRatio()).replace('{width}', self.settings.getIconSize())
+                icon = element[2].replace('{ratio}', self.getIconRatio()).replace('{width}', self.getIconSize())
             #
             pUI.addListItem(
                 pTitle=element[1], 
@@ -226,7 +247,7 @@ class Main(Kodi):
         for element in pData:
             icon = None
             if element[2]:
-                icon = element[2].replace('{ratio}', self.settings.getIconRatio()).replace('{width}', self.settings.getIconSize())
+                icon = element[2].replace('{ratio}', self.getIconRatio()).replace('{width}', self.getIconSize())
             #
             if len(element) > 3:
                 cm = [(self.localizeString(30100),'RunPlugin({})'.format(self.generateUrl( { 'mode': 'download', 'filename': pyUtils.file_cleanupname(element[1]), 'targetUrl': element[3]})))]
